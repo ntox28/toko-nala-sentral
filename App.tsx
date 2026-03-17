@@ -11,7 +11,7 @@ import PricingCalculatorView from './components/PricingCalculatorView';
 import LoginView from './components/LoginView';
 import ReceiptModal from './components/ReceiptModal';
 import Footer from './components/Footer';
-import { TeaIcon, PackageIcon, ChartBarIcon, ReceiptRefundIcon, CogIcon, MenuIcon, ArchiveBoxIcon, CalculatorIcon, RefreshIcon } from './components/Icons';
+import { TeaIcon, PackageIcon, ChartBarIcon, ReceiptRefundIcon, CogIcon, MenuIcon, ArchiveBoxIcon, CalculatorIcon } from './components/Icons';
 import { LayoutDashboard } from 'lucide-react';
 import * as db from './supabaseService';
 import { supabase } from './supabase';
@@ -21,10 +21,9 @@ interface HeaderProps {
     currentView: View;
     setView: (view: View) => void;
     currentUser: User;
-    onRefresh: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentView, setView, currentUser, onRefresh }) => {
+const Header: React.FC<HeaderProps> = ({ currentView, setView, currentUser }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     
@@ -83,13 +82,6 @@ const Header: React.FC<HeaderProps> = ({ currentView, setView, currentUser, onRe
             </div>
             
             {currentUser && <div className="relative flex items-center space-x-2" ref={dropdownRef}>
-                <button 
-                    onClick={onRefresh}
-                    className="p-2 rounded-full bg-blue-900/50 hover:bg-blue-700/60 transition-colors"
-                    title="Segarkan Data"
-                >
-                    <RefreshIcon className="w-5 h-5" />
-                </button>
                 <button 
                     onClick={() => setIsDropdownOpen(prev => !prev)}
                     className="flex items-center space-x-2 px-4 py-2 rounded-full transition-colors duration-200 bg-blue-900/50 hover:bg-blue-700/60"
@@ -160,7 +152,8 @@ const App: React.FC = () => {
     }
     
     console.log(`fetchData: starting (background: ${isBackground})...`);
-    if (!isBackground) setLoading(true);
+    // Only show loading overlay if we don't have essential data yet
+    if (!isBackground && products.length === 0) setLoading(true);
     isFetchingRef.current = true;
 
     // Safety timeout for this specific fetch
@@ -226,9 +219,8 @@ const App: React.FC = () => {
       console.log('handleSession: starting for user:', session.user.id);
       isHandlingSessionRef.current = true;
       
-      // ONLY set global loading if we don't have a user yet
-      // This prevents the "refresh" feel when switching tabs or token refreshing
-      const isInitialLoad = !currentUser;
+      // ONLY set global loading if we don't have a user AND no products (initial cold start)
+      const isInitialLoad = !currentUser && products.length === 0;
       if (isInitialLoad) {
         setLoading(true);
       }
@@ -307,12 +299,21 @@ const App: React.FC = () => {
       }
     });
 
+    // 3. Logout on tab close
+    const handleBeforeUnload = () => {
+      // We use a synchronous-ish approach if possible, but signOut is async.
+      // Most browsers will allow the request to start.
+      supabase.auth.signOut();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       mounted = false;
       clearTimeout(timeoutId);
       subscription.unsubscribe();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []);
+  }, [currentUser, products.length]);
 
   const handleTransactionComplete = async (transaction: Transaction) => {
     try {
@@ -577,7 +578,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header currentView={view} setView={setView} currentUser={currentUser} onRefresh={fetchData} />
+      <Header currentView={view} setView={setView} currentUser={currentUser} />
       <main className="flex-grow">
         {renderView()}
       </main>

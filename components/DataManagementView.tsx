@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { Transaction, Product, Expense, Size, PaymentMethod } from '../types';
-import { TrashIcon, EditIcon, PlusIcon, PackageIcon, ReceiptRefundIcon, ChartBarIcon, ArchiveBoxIcon, CloseIcon, DownloadIcon, UploadIcon, RefreshIcon, SearchIcon } from './Icons';
+import { TrashIcon, EditIcon, PlusIcon, PackageIcon, ReceiptRefundIcon, ChartBarIcon, ArchiveBoxIcon, CloseIcon, DownloadIcon, UploadIcon, SearchIcon } from './Icons';
 import { uploadProductImage } from '../supabase';
 import Pagination from './Pagination';
 
@@ -47,16 +47,6 @@ const DataManagementView: React.FC<DataManagementViewProps> = (props) => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-blue-900">Manajemen Data (Admin)</h1>
-        {props.onRefresh && (
-            <button 
-                onClick={props.onRefresh}
-                className="p-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-200 flex items-center space-x-2"
-                title="Segarkan Data"
-            >
-                <RefreshIcon className="w-5 h-5" />
-                <span className="text-sm font-medium">Segarkan Data</span>
-            </button>
-        )}
       </div>
       
       <div className="flex space-x-1 bg-blue-100 p-1 rounded-xl mb-6 max-w-2xl">

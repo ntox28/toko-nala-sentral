@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Product, CartItem, PaymentMethod, Transaction, User, TransactionDetail } from '../types';
-import { PlusIcon, MinusIcon, TrashIcon, PackageIcon, BarcodeIcon, RefreshIcon, ShoppingCartIcon, CloseIcon, SearchIcon } from './Icons';
+import { PlusIcon, MinusIcon, TrashIcon, PackageIcon, BarcodeIcon, ShoppingCartIcon, CloseIcon, SearchIcon } from './Icons';
 import Pagination from './Pagination';
 
 interface POSViewProps {
@@ -448,15 +448,6 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
             >
                 <BarcodeIcon className="w-6 h-6" />
             </button>
-            {onRefresh && (
-                <button 
-                    title="Segarkan Data"
-                    className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
-                    onClick={onRefresh}
-                >
-                    <RefreshIcon className="w-6 h-6" />
-                </button>
-            )}
         </div>
 
         <div className="flex-grow overflow-y-auto pr-2">
