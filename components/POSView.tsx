@@ -379,7 +379,7 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, onSa
     }
 
     const price = Number(manualPrice);
-    const manualSize = '(Manual)';
+    const manualSize = 'Manual';
 
     // Check if product already exists in local list
     let product = products.find(p => 
