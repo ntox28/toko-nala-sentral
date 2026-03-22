@@ -41,11 +41,13 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ transaction, products, onCl
             </thead>
             <tbody className="border-t border-b border-dashed border-gray-400">
               {transaction.details.map(item => {
-                const product = getProductDetails(item.product_id);
+                const product = getProductDetails(item.product_id || '');
+                const name = item.product_name || product.name;
+                const size = item.product_size || product.size;
                 return (
                   <tr key={item.id}>
                     <td className="py-1">
-                      <div>{product.name} ({product.size})</div>
+                      <div>{name} ({size})</div>
                       <div className="pl-2">{item.quantity} x {item.unit_price.toLocaleString('id-ID')}</div>
                     </td>
                     <td className="text-right align-bottom py-1">{item.subtotal.toLocaleString('id-ID')}</td>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Product, Size, User, UserRole } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, CloseIcon, PackageIcon, UploadIcon, RefreshIcon } from './Icons';
+import { PlusIcon, EditIcon, TrashIcon, CloseIcon, PackageIcon, UploadIcon, SearchIcon } from './Icons';
 import { uploadProductImage } from '../supabase';
 import Pagination from './Pagination';
 
@@ -16,6 +16,7 @@ const emptyProduct: ProductFormData = {
     cost_price: 0,
     stock: 0,
     low_stock_threshold: 5,
+    use_stock: false,
     is_active: true,
     image_url: DEFAULT_IMAGE_URL,
 };
@@ -183,7 +184,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="col-span-2">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Harga Modal (Rp)</label>
+                            <input type="number" name="cost_price" value={product.cost_price} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required min="0" />
+                        </div>
+                        <div>
                             <label className="block text-sm font-medium text-gray-700">Harga Jual (Rp)</label>
                             <input type="number" name="price" value={product.price} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required min="0" />
                         </div>
@@ -191,17 +196,39 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Stok Saat Ini</label>
-                            <input type="number" name="stock" value={product.stock} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required min="0" />
+                            <input 
+                                type="number" 
+                                name="stock" 
+                                value={product.stock} 
+                                onChange={handleChange} 
+                                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${!product.use_stock ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-white border-gray-300'}`} 
+                                required={product.use_stock} 
+                                min="0" 
+                                disabled={!product.use_stock}
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Batas Stok Menipis</label>
-                            <input type="number" name="low_stock_threshold" value={product.low_stock_threshold} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required min="0" />
+                            <input 
+                                type="number" 
+                                name="low_stock_threshold" 
+                                value={product.low_stock_threshold} 
+                                onChange={handleChange} 
+                                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${!product.use_stock ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-white border-gray-300'}`} 
+                                required={product.use_stock} 
+                                min="0" 
+                                disabled={!product.use_stock}
+                            />
                         </div>
                     </div>
-                    <div className="mb-6">
+                    <div className="grid grid-cols-2 gap-4 mb-6">
                         <label className="flex items-center">
                             <input type="checkbox" name="is_active" checked={'is_active' in product ? product.is_active : true} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                             <span className="ml-2 text-sm text-gray-700">Produk Aktif</span>
+                        </label>
+                        <label className="flex items-center">
+                            <input type="checkbox" name="use_stock" checked={product.use_stock} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                            <span className="ml-2 text-sm text-gray-700">Gunakan Stok</span>
                         </label>
                     </div>
                     <div className="flex justify-end space-x-3">
@@ -229,9 +256,25 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({ products,
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
   
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) return products;
+    const term = searchTerm.toLowerCase();
+    return products.filter(p => 
+      p.name.toLowerCase().includes(term) || 
+      (p.barcode && p.barcode.toLowerCase().includes(term)) ||
+      p.size.toLowerCase().includes(term)
+    );
+  }, [products, searchTerm]);
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
   
   const existingImages = useMemo(() => {
     const urls = products
@@ -242,8 +285,8 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({ products,
 
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return products.slice(start, start + itemsPerPage);
-  }, [products, currentPage]);
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage]);
   
   const isAdmin = currentUser.role?.toLowerCase() === 'admin';
   console.log('ProductManagementView: currentUser role:', currentUser.role, 'isAdmin:', isAdmin);
@@ -273,20 +316,23 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({ products,
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
         <h1 className="text-3xl font-bold text-blue-900">Daftar Produk</h1>
-        <div className="flex items-center space-x-2">
-            {onRefresh && (
-                <button 
-                    onClick={onRefresh}
-                    className="p-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-200"
-                    title="Segarkan Data"
-                >
-                    <RefreshIcon className="w-5 h-5" />
-                </button>
-            )}
+        <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
+            <div className="relative w-full sm:w-64">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <SearchIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                    type="text"
+                    placeholder="Cari produk..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+            </div>
             {isAdmin && (
-                <button onClick={() => handleOpenModal()} className="flex items-center space-x-2 bg-[#2F4B8B] text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-800 transition-colors">
+                <button onClick={() => handleOpenModal()} className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-[#2F4B8B] text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-800 transition-colors">
                     <PlusIcon className="w-5 h-5" />
                     <span>Tambah Produk</span>
                 </button>
@@ -324,11 +370,17 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({ products,
                 <td className="px-6 py-4 font-mono text-xs">{product.barcode || '-'}</td>
                 <td className="px-6 py-4">{product.size}</td>
                 <td className="px-6 py-4 text-right">
-                    <span className={`font-bold ${product.stock <= product.low_stock_threshold ? 'text-red-600' : 'text-gray-900'}`}>
-                        {product.stock}
-                    </span>
-                    {product.stock <= product.low_stock_threshold && (
-                        <div className="text-[10px] text-red-500 font-bold uppercase">Menipis!</div>
+                    {product.use_stock ? (
+                        <>
+                            <span className={`font-bold ${product.stock <= product.low_stock_threshold ? 'text-red-600' : 'text-gray-900'}`}>
+                                {product.stock}
+                            </span>
+                            {product.stock <= product.low_stock_threshold && (
+                                <div className="text-[10px] text-red-500 font-bold uppercase">Menipis!</div>
+                            )}
+                        </>
+                    ) : (
+                        <span className="text-gray-400 italic text-xs">Abaikan Stok</span>
                     )}
                 </td>
                 <td className="px-6 py-4 text-right">Rp {product.price.toLocaleString('id-ID')}</td>
@@ -357,7 +409,7 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({ products,
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
-            totalItems={products.length}
+            totalItems={filteredProducts.length}
             itemsPerPage={itemsPerPage}
         />
       </div>

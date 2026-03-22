@@ -331,15 +331,15 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSaveProduct = async (productData: Product | Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> => {
+  const handleSaveProduct = async (productData: Product | Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> => {
     try {
-      await db.saveProduct(productData);
+      const saved = await db.saveProduct(productData);
       const updated = await db.getProducts();
       setProducts(updated);
-      return true;
+      return saved;
     } catch (error) {
       console.error('Error saving product:', error);
-      return false;
+      return null;
     }
   };
   
@@ -506,9 +506,19 @@ const App: React.FC = () => {
 
     switch (view) {
       case View.DASHBOARD:
-        return <DashboardView transactions={transactions} expenses={expenses} />;
+        return (
+          <DashboardView 
+            transactions={transactions} 
+            expenses={expenses} 
+            onSaveTransaction={handleSaveTransaction}
+            onDeleteTransaction={handleDeleteTransaction}
+            onSaveExpense={handleSaveExpense}
+            onDeleteExpense={handleDeleteExpense}
+            onPrintReceipt={(tx) => setLatestTransaction(tx)}
+          />
+        );
       case View.POS:
-        return <POSView products={products} onTransactionComplete={handleTransactionComplete} currentUser={currentUser} onRefresh={fetchData}/>;
+        return <POSView products={products} onTransactionComplete={handleTransactionComplete} onSaveProduct={handleSaveProduct} currentUser={currentUser} onRefresh={fetchData}/>;
       case View.EXPENSES:
         return <ExpensesView 
             expenses={expenses} 

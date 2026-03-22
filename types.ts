@@ -68,6 +68,7 @@ export interface Product {
   cost_price: number; // Added cost_price
   stock: number; // Added stock
   low_stock_threshold: number; // Added low_stock_threshold
+  use_stock: boolean; // Added use_stock toggle
   is_active: boolean;
   image_url?: string;
   created_at?: string;
@@ -87,7 +88,9 @@ export interface CartItem {
 export interface TransactionDetail {
   id: string;
   transaction_id: string;
-  product_id: string;
+  product_id: string | null;
+  product_name?: string; // For manual items or to lock name
+  product_size?: string; // For manual items or to lock size
   quantity: number;
   unit_price: number;
   cost_price: number; // Added cost_price to lock it at transaction time

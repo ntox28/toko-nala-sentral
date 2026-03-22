@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Transaction, Expense, PaymentMethod } from '../types';
+import { Transaction, Expense, PaymentMethod, UserRole } from '../types';
 import { getAppSetting, saveAppSetting } from '../supabaseService';
 import { 
   TrendingUp, 
@@ -10,7 +10,11 @@ import {
   CreditCard, 
   Banknote,
   Plus,
-  X
+  X,
+  Edit,
+  Trash2,
+  Printer,
+  ChevronRight
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -29,15 +33,33 @@ import {
 interface DashboardViewProps {
   transactions: Transaction[];
   expenses: Expense[];
+  onDeleteTransaction: (id: string) => Promise<boolean>;
+  onSaveTransaction: (transaction: Transaction) => Promise<boolean>;
+  onDeleteExpense: (id: string) => Promise<boolean>;
+  onSaveExpense: (expense: Expense) => Promise<boolean>;
+  onPrintReceipt: (transaction: Transaction) => void;
 }
 
-const DashboardView: React.FC<DashboardViewProps> = ({ transactions, expenses }) => {
-  const [initialCash, setInitialCash] = useState<number>(0);
+const DashboardView: React.FC<DashboardViewProps> = ({ 
+  transactions, 
+  expenses,
+  onDeleteTransaction,
+  onSaveTransaction,
+  onDeleteExpense,
+  onSaveExpense,
+  onPrintReceipt
+}) => {
+  const [initialCash, setInitialCash] = useState<number>(100000);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tempInitialCash, setTempInitialCash] = useState<string>('0');
+  const [tempInitialCash, setTempInitialCash] = useState<string>('100000');
+  
+  // Detail Modals State
+  const [activeDetailModal, setActiveDetailModal] = useState<'income' | 'transactions' | 'expenses' | 'cash' | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
-  const storageKey = `initial_cash_${today}`;
+  const storageKey = 'initial_cash_global';
 
   useEffect(() => {
     const fetchInitialCash = async () => {
@@ -45,10 +67,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ transactions, expenses })
       if (saved) {
         setInitialCash(parseFloat(saved));
         setTempInitialCash(saved);
+      } else {
+        // If no setting exists, save the default 100,000
+        await saveAppSetting(storageKey, '100000');
       }
     };
     fetchInitialCash();
-  }, [storageKey]);
+  }, []);
 
   const handleSaveInitialCash = async () => {
     const val = parseFloat(tempInitialCash) || 0;
@@ -113,45 +138,61 @@ const DashboardView: React.FC<DashboardViewProps> = ({ transactions, expenses })
 
       {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
-          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+        <button 
+          onClick={() => setActiveDetailModal('income')}
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 hover:shadow-md hover:border-emerald-200 transition-all text-left group"
+        >
+          <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl group-hover:scale-110 transition-transform">
             <TrendingUp size={24} />
           </div>
-          <div>
+          <div className="flex-grow">
             <p className="text-sm text-gray-500 font-medium">Pemasukan Hari Ini</p>
             <p className="text-2xl font-bold text-gray-900">Rp {todayStats.totalIncome.toLocaleString('id-ID')}</p>
           </div>
-        </div>
+          <ChevronRight size={20} className="text-gray-300 group-hover:text-emerald-500 transition-colors" />
+        </button>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
-          <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+        <button 
+          onClick={() => setActiveDetailModal('transactions')}
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 hover:shadow-md hover:border-blue-200 transition-all text-left group"
+        >
+          <div className="p-3 bg-blue-100 text-blue-600 rounded-xl group-hover:scale-110 transition-transform">
             <ShoppingCart size={24} />
           </div>
-          <div>
+          <div className="flex-grow">
             <p className="text-sm text-gray-500 font-medium">Jumlah Transaksi</p>
             <p className="text-2xl font-bold text-gray-900">{todayStats.txCount} Transaksi</p>
           </div>
-        </div>
+          <ChevronRight size={20} className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+        </button>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
-          <div className="p-3 bg-red-100 text-red-600 rounded-xl">
+        <button 
+          onClick={() => setActiveDetailModal('expenses')}
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 hover:shadow-md hover:border-red-200 transition-all text-left group"
+        >
+          <div className="p-3 bg-red-100 text-red-600 rounded-xl group-hover:scale-110 transition-transform">
             <ArrowDownCircle size={24} />
           </div>
-          <div>
+          <div className="flex-grow">
             <p className="text-sm text-gray-500 font-medium">Pengeluaran</p>
             <p className="text-2xl font-bold text-gray-900">Rp {todayStats.totalExpenses.toLocaleString('id-ID')}</p>
           </div>
-        </div>
+          <ChevronRight size={20} className="text-gray-300 group-hover:text-red-500 transition-colors" />
+        </button>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
-          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+        <button 
+          onClick={() => setActiveDetailModal('cash')}
+          className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 hover:shadow-md hover:border-indigo-200 transition-all text-left group"
+        >
+          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl group-hover:scale-110 transition-transform">
             <Wallet size={24} />
           </div>
-          <div>
+          <div className="flex-grow">
             <p className="text-sm text-gray-500 font-medium">Kas Akhir</p>
             <p className="text-2xl font-bold text-gray-900">Rp {todayStats.finalCash.toLocaleString('id-ID')}</p>
           </div>
-        </div>
+          <ChevronRight size={20} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+        </button>
       </div>
 
       {/* Initial Cash Button */}
@@ -226,6 +267,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ transactions, expenses })
                   <th className="pb-4 font-medium">Metode</th>
                   <th className="pb-4 font-medium">Kasir</th>
                   <th className="pb-4 font-medium text-right">Total</th>
+                  <th className="pb-4 font-medium text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -246,6 +288,31 @@ const DashboardView: React.FC<DashboardViewProps> = ({ transactions, expenses })
                     </td>
                     <td className="py-4 text-gray-700">{tx.cashier_name}</td>
                     <td className="py-4 text-right font-bold text-gray-900">Rp {tx.total.toLocaleString('id-ID')}</td>
+                    <td className="py-4 text-center">
+                      <div className="flex justify-center space-x-2">
+                        <button 
+                          onClick={() => setEditingTransaction(JSON.parse(JSON.stringify(tx)))}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={() => onPrintReceipt(tx)}
+                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                          title="Print Ulang Struk"
+                        >
+                          <Printer size={16} />
+                        </button>
+                        <button 
+                          onClick={() => window.confirm('Hapus transaksi ini?') && onDeleteTransaction(tx.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Hapus"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {todayStats.recentTxs.length === 0 && (
@@ -258,6 +325,327 @@ const DashboardView: React.FC<DashboardViewProps> = ({ transactions, expenses })
           </div>
         </div>
       </div>
+
+      {/* Detail Modals */}
+      {activeDetailModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-[110] p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-blue-900 text-white shrink-0">
+              <h2 className="text-xl font-bold">
+                {activeDetailModal === 'income' && "Ringkasan Pembayaran Hari Ini"}
+                {activeDetailModal === 'transactions' && "Daftar Transaksi Hari Ini"}
+                {activeDetailModal === 'expenses' && "Daftar Pengeluaran Hari Ini"}
+                {activeDetailModal === 'cash' && "Rincian Kas Akhir"}
+              </h2>
+              <button onClick={() => setActiveDetailModal(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              {activeDetailModal === 'cash' && (
+                <div className="mb-8 text-center">
+                  <p className="text-gray-500 font-medium mb-1">Total Kas Akhir</p>
+                  <p className="text-5xl font-black text-indigo-600">Rp {todayStats.finalCash.toLocaleString('id-ID')}</p>
+                </div>
+              )}
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="text-gray-400 text-sm uppercase tracking-wider border-b border-gray-100">
+                      {activeDetailModal === 'income' && (
+                        <>
+                          <th className="pb-4 font-medium">Waktu</th>
+                          <th className="pb-4 font-medium">Kode</th>
+                          <th className="pb-4 font-medium">Metode</th>
+                          <th className="pb-4 font-medium text-right">Nominal</th>
+                          <th className="pb-4 font-medium text-center">Aksi</th>
+                        </>
+                      )}
+                      {activeDetailModal === 'transactions' && (
+                        <>
+                          <th className="pb-4 font-medium">Waktu</th>
+                          <th className="pb-4 font-medium">Metode</th>
+                          <th className="pb-4 font-medium">Kasir</th>
+                          <th className="pb-4 font-medium text-right">Nominal</th>
+                          <th className="pb-4 font-medium text-center">Aksi</th>
+                        </>
+                      )}
+                      {activeDetailModal === 'expenses' && (
+                        <>
+                          <th className="pb-4 font-medium">Tanggal</th>
+                          <th className="pb-4 font-medium">Deskripsi</th>
+                          <th className="pb-4 font-medium text-right">Jumlah</th>
+                          <th className="pb-4 font-medium text-center">Aksi</th>
+                        </>
+                      )}
+                      {activeDetailModal === 'cash' && (
+                        <>
+                          <th className="pb-4 font-medium">Metode Pembayaran</th>
+                          <th className="pb-4 font-medium text-right">Total Nominal</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {(activeDetailModal === 'income' || activeDetailModal === 'transactions') && 
+                      transactions.filter(t => t.date.startsWith(today)).map(tx => (
+                        <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-4 text-gray-600">
+                            {new Date(tx.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                          {activeDetailModal === 'income' && (
+                            <td className="py-4 font-mono text-sm text-blue-600 font-medium">{tx.transaction_code}</td>
+                          )}
+                          <td className="py-4">
+                            <div className="flex items-center space-x-2">
+                              {tx.payment_method === PaymentMethod.TUNAI ? <Banknote size={16} className="text-emerald-500" /> : <CreditCard size={16} className="text-blue-500" />}
+                              <span className="text-gray-700">{tx.payment_method}</span>
+                            </div>
+                          </td>
+                          {activeDetailModal === 'transactions' && (
+                            <td className="py-4 text-gray-700">{tx.cashier_name}</td>
+                          )}
+                          <td className="py-4 text-right font-bold text-gray-900">Rp {tx.total.toLocaleString('id-ID')}</td>
+                          <td className="py-4 text-center">
+                            <div className="flex justify-center space-x-2">
+                              <button 
+                                onClick={() => setEditingTransaction(JSON.parse(JSON.stringify(tx)))}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button 
+                                onClick={() => onPrintReceipt(tx)}
+                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title="Print Ulang Struk"
+                              >
+                                <Printer size={18} />
+                              </button>
+                              <button 
+                                onClick={() => window.confirm('Hapus transaksi ini?') && onDeleteTransaction(tx.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Hapus"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    }
+                    {activeDetailModal === 'expenses' && 
+                      expenses.filter(e => e.date.startsWith(today)).map(exp => (
+                        <tr key={exp.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="py-4 text-gray-600">
+                            {new Date(exp.date).toLocaleDateString('id-ID')}
+                          </td>
+                          <td className="py-4 text-gray-700">{exp.description}</td>
+                          <td className="py-4 text-right font-bold text-gray-900">Rp {exp.amount.toLocaleString('id-ID')}</td>
+                          <td className="py-4 text-center">
+                            <div className="flex justify-center space-x-2">
+                              <button 
+                                onClick={() => setEditingExpense({...exp})}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button 
+                                onClick={() => window.confirm('Hapus pengeluaran ini?') && onDeleteExpense(exp.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Hapus"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    }
+                    {activeDetailModal === 'cash' && (
+                      <>
+                        {Object.values(PaymentMethod).map(method => {
+                          const total = transactions
+                            .filter(t => t.date.startsWith(today) && t.payment_method === method)
+                            .reduce((sum, t) => sum + t.total, 0);
+                          return (
+                            <tr key={method} className="hover:bg-gray-50 transition-colors">
+                              <td className="py-4">
+                                <div className="flex items-center space-x-2">
+                                  {method === PaymentMethod.TUNAI ? <Banknote size={16} className="text-emerald-500" /> : <CreditCard size={16} className="text-blue-500" />}
+                                  <span className="text-gray-700 font-medium">{method}</span>
+                                </div>
+                              </td>
+                              <td className="py-4 text-right font-bold text-gray-900">Rp {total.toLocaleString('id-ID')}</td>
+                            </tr>
+                          );
+                        })}
+                        <tr className="bg-indigo-50/50">
+                          <td className="py-4 font-bold text-indigo-900 px-2">Total Pemasukan</td>
+                          <td className="py-4 text-right font-black text-indigo-900 px-2">Rp {todayStats.totalIncome.toLocaleString('id-ID')}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-4 font-medium text-gray-600 px-2">Kas Awal</td>
+                          <td className="py-4 text-right font-bold text-gray-600 px-2">Rp {initialCash.toLocaleString('id-ID')}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-4 font-medium text-red-600 px-2">Total Pengeluaran</td>
+                          <td className="py-4 text-right font-bold text-red-600 px-2">- Rp {todayStats.totalExpenses.toLocaleString('id-ID')}</td>
+                        </tr>
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction Edit Modal */}
+      {editingTransaction && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-[120] p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-blue-900 text-white">
+              <h2 className="text-xl font-bold">Edit Transaksi {editingTransaction.transaction_code}</h2>
+              <button onClick={() => setEditingTransaction(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Metode Pembayaran</label>
+                  <select 
+                    value={editingTransaction.payment_method}
+                    onChange={(e) => setEditingTransaction({...editingTransaction, payment_method: e.target.value as PaymentMethod})}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+                  >
+                    {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Total (Otomatis)</label>
+                  <div className="p-3 bg-gray-100 rounded-xl font-bold text-gray-900">Rp {editingTransaction.total.toLocaleString('id-ID')}</div>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="font-bold text-gray-700 mb-3">Item Transaksi</h4>
+                <div className="max-h-60 overflow-y-auto space-y-2 border rounded-xl p-2">
+                  {editingTransaction.details.map((det, idx) => (
+                    <div key={det.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      <div className="flex-grow">
+                        <p className="font-bold text-sm text-gray-800">{det.product_name || `Produk ID: ${det.product_id}`}</p>
+                        <p className="text-xs text-gray-500">Rp {det.unit_price.toLocaleString('id-ID')} x {det.quantity}</p>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input 
+                          type="number" 
+                          value={det.quantity}
+                          onChange={(e) => {
+                            const newQty = parseInt(e.target.value) || 0;
+                            const newDetails = [...editingTransaction.details];
+                            newDetails[idx] = { ...det, quantity: newQty, subtotal: newQty * det.unit_price };
+                            const newTotal = newDetails.reduce((sum, d) => sum + d.subtotal, 0);
+                            setEditingTransaction({ ...editingTransaction, details: newDetails, total: newTotal });
+                          }}
+                          className="w-16 p-2 border rounded-lg text-center font-bold"
+                          min="1"
+                        />
+                        <p className="font-bold text-blue-700 text-sm w-24 text-right">Rp {det.subtotal.toLocaleString('id-ID')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex space-x-4">
+                <button 
+                  onClick={() => setEditingTransaction(null)}
+                  className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={async () => {
+                    const success = await onSaveTransaction(editingTransaction);
+                    if (success) setEditingTransaction(null);
+                  }}
+                  className="flex-1 py-4 bg-blue-900 text-white rounded-2xl font-bold hover:bg-blue-800 shadow-lg shadow-blue-900/20 transition-all"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expense Edit Modal */}
+      {editingExpense && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-[120] p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-red-600 text-white">
+              <h2 className="text-xl font-bold">Edit Pengeluaran</h2>
+              <button onClick={() => setEditingExpense(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-8">
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Deskripsi</label>
+                  <input 
+                    type="text" 
+                    value={editingExpense.description}
+                    onChange={(e) => setEditingExpense({...editingExpense, description: e.target.value})}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Jumlah (Rp)</label>
+                  <input 
+                    type="number" 
+                    value={editingExpense.amount}
+                    onChange={(e) => setEditingExpense({...editingExpense, amount: parseFloat(e.target.value) || 0})}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500 font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Kategori</label>
+                  <input 
+                    type="text" 
+                    value={editingExpense.category}
+                    onChange={(e) => setEditingExpense({...editingExpense, category: e.target.value})}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500"
+                  />
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                <button 
+                  onClick={() => setEditingExpense(null)}
+                  className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={async () => {
+                    const success = await onSaveExpense(editingExpense);
+                    if (success) setEditingExpense(null);
+                  }}
+                  className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all"
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Initial Cash Modal */}
       {isModalOpen && (

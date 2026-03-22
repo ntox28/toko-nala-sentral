@@ -6,6 +6,7 @@ import Pagination from './Pagination';
 interface POSViewProps {
   products: Product[];
   onTransactionComplete: (transaction: Transaction) => void;
+  onSaveProduct: (product: any) => Promise<Product | null>;
   currentUser: User;
   onRefresh?: () => void;
 }
@@ -26,14 +27,14 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product) 
             <div>
                 <div className="flex justify-between items-start">
                     <h3 className="text-xs font-bold text-gray-800 truncate flex-grow leading-tight">{product.name}</h3>
-                    <span className={`text-[9px] font-bold px-1 py-0.5 rounded ml-1 whitespace-nowrap ${product.stock <= product.low_stock_threshold ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
-                        {product.stock}
+                    <span className={`text-[9px] font-bold px-1 py-0.5 rounded ml-1 whitespace-nowrap ${product.use_stock && product.stock <= product.low_stock_threshold ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                        {product.use_stock ? product.stock : '∞'}
                     </span>
                 </div>
                 <p className="text-[10px] text-gray-500 mt-0.5">{product.size}</p>
             </div>
             <div className="flex justify-between items-center mt-1">
-                {product.stock <= 0 ? (
+                {product.use_stock && product.stock <= 0 ? (
                     <span className="text-[9px] text-red-600 font-bold uppercase">Habis</span>
                 ) : <div />}
                 <p className="text-sm font-bold text-blue-900">
@@ -213,6 +214,15 @@ const CheckoutConfirmationModal: React.FC<CheckoutConfirmationModalProps> = ({ c
                                     </button>
                                 ))}
                             </div>
+                            <button 
+                                onClick={() => {
+                                    setPaymentMethod(PaymentMethod.TUNAI);
+                                    setAmountReceived(finalTotal.toString());
+                                }}
+                                className="mt-2 w-full py-2 bg-green-50 text-green-700 border border-green-200 rounded-md text-xs font-bold hover:bg-green-100 transition-colors flex items-center justify-center"
+                            >
+                                Uang Pas (Rp {finalTotal.toLocaleString('id-ID')})
+                            </button>
                         </div>
 
                         <div>
@@ -270,12 +280,15 @@ const CheckoutConfirmationModal: React.FC<CheckoutConfirmationModalProps> = ({ c
 
 
 // FIX: The POSView component was incomplete. It has been fully implemented, including state management, event handlers, a return statement, and a default export. This resolves all reported errors.
-const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, currentUser, onRefresh }) => {
+const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, onSaveProduct, currentUser, onRefresh }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [manualName, setManualName] = useState('');
+  const [manualPrice, setManualPrice] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
@@ -303,7 +316,7 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
   }, [searchTerm]);
   
   const handleAddToCart = useCallback((product: Product) => {
-    if (product.stock <= 0) {
+    if (product.use_stock && product.stock <= 0) {
         alert('Stok produk habis!');
         return;
     }
@@ -311,7 +324,7 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.productId === product.id);
       if (existingItem) {
-        if (existingItem.quantity >= product.stock) {
+        if (product.use_stock && existingItem.quantity >= product.stock) {
             alert('Tidak dapat menambah lebih banyak. Stok terbatas.');
             return prevCart;
         }
@@ -341,7 +354,7 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
       setCart(prevCart => prevCart.filter(item => item.productId !== productId));
     } else {
       const product = products.find(p => p.id === productId);
-      if (product && newQuantity > product.stock) {
+      if (product && product.use_stock && newQuantity > product.stock) {
           alert(`Stok tidak mencukupi. Maksimal stok: ${product.stock}`);
           return;
       }
@@ -358,6 +371,61 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
   const handleRemoveFromCart = useCallback((productId: string) => {
     setCart(prevCart => prevCart.filter(item => item.productId !== productId));
   }, []);
+
+  const handleManualAdd = useCallback(async () => {
+    if (!manualName.trim() || !manualPrice || isNaN(Number(manualPrice))) {
+      alert('Mohon isi nama produk dan harga yang valid.');
+      return;
+    }
+
+    const price = Number(manualPrice);
+    const manualSize = '(Manual)';
+
+    // Check if product already exists in local list
+    let product = products.find(p => 
+      p.name.toLowerCase() === manualName.trim().toLowerCase() && 
+      p.size === manualSize
+    );
+
+    if (!product) {
+      // Create new product automatically
+      const newProductData = {
+        name: manualName.trim(),
+        size: manualSize,
+        price: price,
+        cost_price: 0,
+        stock: 0,
+        low_stock_threshold: 0,
+        use_stock: false,
+        is_active: true
+      };
+      
+      const savedProduct = await onSaveProduct(newProductData);
+      if (savedProduct) {
+        product = savedProduct;
+      }
+    }
+
+    if (product) {
+      handleAddToCart(product);
+    } else {
+      // Fallback if saving fails (though it shouldn't)
+      const newItem: CartItem = {
+        productId: `manual-${Date.now()}`,
+        name: manualName.trim(),
+        size: manualSize,
+        quantity: 1,
+        unitPrice: price,
+        subtotal: price,
+      };
+      setCart(prevCart => [...prevCart, newItem]);
+    }
+
+    setManualName('');
+    setManualPrice('');
+    setIsManualModalOpen(false);
+    setIsCartOpen(true);
+  }, [manualName, manualPrice, products, onSaveProduct, handleAddToCart]);
 
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.subtotal, 0), [cart]);
 
@@ -394,6 +462,8 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
                 id: `det-${Date.now()}-${index}`,
                 transaction_id: `trans-${Date.now()}`,
                 product_id: item.productId,
+                product_name: item.name,
+                product_size: item.size,
                 quantity: item.quantity,
                 unit_price: item.unitPrice,
                 cost_price: product?.cost_price || 0,
@@ -440,6 +510,15 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
             </button>
 
             <button 
+                onClick={() => setIsManualModalOpen(true)}
+                className="p-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex items-center space-x-1"
+                title="Tambah Manual"
+            >
+                <PlusIcon className="w-6 h-6" />
+                <span className="text-xs font-bold hidden md:inline">Tambah Manual</span>
+            </button>
+
+            <button 
                 title="Scan Barcode"
                 className="p-2 bg-blue-100 text-[#2F4B8B] rounded-lg hover:bg-blue-200 transition-colors"
                 onClick={() => {
@@ -472,6 +551,55 @@ const POSView: React.FC<POSViewProps> = ({ products, onTransactionComplete, curr
             itemsPerPage={itemsPerPage}
         />
       </div>
+
+      {/* Manual Add Modal */}
+      {isManualModalOpen && (
+        <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
+            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsManualModalOpen(false)} />
+            <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden">
+                <div className="p-4 border-b flex justify-between items-center bg-green-600 text-white">
+                    <div className="flex items-center space-x-2">
+                        <PlusIcon className="w-6 h-6" />
+                        <h2 className="text-xl font-bold">Tambah Manual</h2>
+                    </div>
+                    <button onClick={() => setIsManualModalOpen(false)} className="p-1 hover:bg-green-700 rounded-full">
+                        <CloseIcon className="w-6 h-6" />
+                    </button>
+                </div>
+                
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Produk</label>
+                        <input 
+                            type="text"
+                            value={manualName}
+                            onChange={(e) => setManualName(e.target.value)}
+                            placeholder="Contoh: Kacang 8 ons"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                            autoFocus
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Harga (Nominal)</label>
+                        <input 
+                            type="number"
+                            value={manualPrice}
+                            onChange={(e) => setManualPrice(e.target.value)}
+                            placeholder="Contoh: 2000"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                        />
+                    </div>
+                    
+                    <button 
+                        onClick={handleManualAdd}
+                        className="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-colors mt-4"
+                    >
+                        Masukan ke keranjang
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
 
       {/* Cart Modal/Drawer */}
       {isCartOpen && (

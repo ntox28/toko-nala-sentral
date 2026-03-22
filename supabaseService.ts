@@ -56,6 +56,7 @@ export const saveProduct = async (product: Partial<Product>): Promise<Product> =
     cost_price: product.cost_price,
     stock: product.stock,
     low_stock_threshold: product.low_stock_threshold,
+    use_stock: product.use_stock ?? false,
     is_active: product.is_active,
     image_url: product.image_url,
     updated_at: new Date().toISOString(),
@@ -185,14 +186,64 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
   }
 
   // 2. Insert details
-  const detailsToInsert = transaction.details.map(d => ({
-    transaction_id: txData.id,
-    product_id: d.product_id,
-    quantity: d.quantity,
-    unit_price: d.unit_price,
-    cost_price: d.cost_price,
-    subtotal: d.subtotal
-  }));
+  const detailsToInsert = [];
+  
+  for (const d of transaction.details) {
+    let productId = d.product_id;
+    
+    // Handle manual products: auto-create if they don't exist
+    if (!productId || productId.startsWith('manual-')) {
+      const manualName = d.product_name || 'Manual Item';
+      const manualSize = d.product_size || '(Manual)';
+      
+      // Check if product already exists with this name and size
+      const { data: existingProduct } = await supabase
+        .from('products')
+        .select('id')
+        .eq('name', manualName)
+        .eq('size', manualSize)
+        .maybeSingle();
+        
+      if (existingProduct) {
+        productId = existingProduct.id;
+      } else {
+        // Create new product
+        const { data: newProduct, error: createError } = await supabase
+          .from('products')
+          .insert([{
+            name: manualName,
+            size: manualSize,
+            price: d.unit_price,
+            cost_price: d.cost_price,
+            stock: 0,
+            low_stock_threshold: 0,
+            use_stock: false, // Default to ignore stock for manual items
+            is_active: true,
+            created_at: new Date().toISOString()
+          }])
+          .select()
+          .single();
+          
+        if (!createError && newProduct) {
+          productId = newProduct.id;
+        }
+      }
+    }
+
+    // Ensure productId is a valid UUID or null before inserting
+    const finalProductId = (productId && !productId.toString().startsWith('manual-')) ? productId : null;
+
+    detailsToInsert.push({
+      transaction_id: txData.id,
+      product_id: finalProductId,
+      product_name: d.product_name, // Save name directly for robustness
+      product_size: d.product_size, // Save size directly for robustness
+      quantity: d.quantity,
+      unit_price: d.unit_price,
+      cost_price: d.cost_price,
+      subtotal: d.subtotal
+    });
+  }
 
   const { data: detailsData, error: detailsError } = await supabase
     .from('transaction_details')
@@ -201,32 +252,51 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
 
   if (detailsError) {
     console.error('Error inserting transaction details:', detailsError);
-    // We don't throw here yet, we want to try to clean up or at least log it
-    // But since transactions are already in, it's better to throw so the UI knows
     throw detailsError;
   }
 
   // 3. Update product stocks
   try {
     for (const detail of transaction.details) {
-      const { error: stockError } = await supabase.rpc('decrement_stock', {
-        row_id: detail.product_id,
-        amount: detail.quantity
-      });
-      
-      if (stockError) {
-          const { data: pData } = await supabase.from('products').select('stock').eq('id', detail.product_id).single();
-          if (pData) {
-              await supabase.from('products').update({ stock: Math.max(0, pData.stock - detail.quantity) }).eq('id', detail.product_id);
-          }
+      if (!detail.product_id || detail.product_id.startsWith('manual-')) continue;
+
+      // Check if product uses stock
+      const { data: productInfo } = await supabase
+        .from('products')
+        .select('use_stock')
+        .eq('id', detail.product_id)
+        .single();
+        
+      if (productInfo && productInfo.use_stock) {
+        const { error: stockError } = await supabase.rpc('decrement_stock', {
+          row_id: detail.product_id,
+          amount: detail.quantity
+        });
+        
+        if (stockError) {
+            const { data: pData } = await supabase.from('products').select('stock').eq('id', detail.product_id).single();
+            if (pData) {
+                await supabase.from('products').update({ stock: Math.max(0, pData.stock - detail.quantity) }).eq('id', detail.product_id);
+            }
+        }
       }
     }
   } catch (stockErr) {
     console.error('Error updating stock:', stockErr);
-    // Stock update failure shouldn't necessarily fail the whole transaction UI-wise if data is saved
   }
 
-  return { ...txData, details: detailsData };
+  return { 
+    ...txData, 
+    details: (detailsData as any[]).map((d, i) => {
+      // Match by index as the order is preserved during bulk insert
+      const originalDetail = transaction.details[i];
+      return {
+        ...d,
+        product_name: originalDetail?.product_name,
+        product_size: originalDetail?.product_size
+      };
+    }) 
+  };
 };
 
 export const deleteTransaction = async (id: string): Promise<void> => {
