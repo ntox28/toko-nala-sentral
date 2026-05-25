@@ -12,7 +12,27 @@ import LoginView from './components/LoginView';
 import ReceiptModal from './components/ReceiptModal';
 import Footer from './components/Footer';
 import { TeaIcon, PackageIcon, ChartBarIcon, ReceiptRefundIcon, CogIcon, MenuIcon, ArchiveBoxIcon, CalculatorIcon } from './components/Icons';
-import { LayoutDashboard } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  ShoppingCart, 
+  Receipt, 
+  Package, 
+  BarChart3, 
+  Calculator, 
+  Database, 
+  Settings, 
+  LogOut, 
+  X, 
+  ChevronRight, 
+  Smartphone, 
+  Tablet, 
+  Monitor,
+  RefreshCw,
+  User as UserIcon,
+  Menu as LucidMenu,
+  Sun,
+  Moon
+} from 'lucide-react';
 import * as db from './supabaseService';
 import { supabase } from './supabase';
 
@@ -21,104 +41,68 @@ interface HeaderProps {
     currentView: View;
     setView: (view: View) => void;
     currentUser: User;
+    onRefresh: () => void;
+    isRefreshing: boolean;
+    onLogout: () => void;
+    isDarkMode: boolean;
+    onToggleDarkMode: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentView, setView, currentUser }) => {
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    
-    const allNavItems = [
-        { view: View.DASHBOARD, label: 'Dashboard', icon: <LayoutDashboard />, roles: [UserRole.ADMIN, UserRole.KASIR] },
-        { view: View.POS, label: 'Kasir', icon: <PackageIcon />, roles: [UserRole.ADMIN, UserRole.KASIR] },
-        { view: View.EXPENSES, label: 'Pengeluaran', icon: <ReceiptRefundIcon />, roles: [UserRole.ADMIN, UserRole.KASIR] },
-        { view: View.PRODUCTS, label: 'Produk', icon: <PackageIcon />, roles: [UserRole.ADMIN, UserRole.KASIR] },
-        { view: View.REPORTS, label: 'Laporan', icon: <ChartBarIcon />, roles: [UserRole.ADMIN] },
-        { view: View.PRICING_CALCULATOR, label: 'Kalkulator Harga', icon: <CalculatorIcon />, roles: [UserRole.ADMIN] },
-        { view: View.DATA_MANAGEMENT, label: 'Manajemen Data', icon: <ArchiveBoxIcon />, roles: [UserRole.ADMIN] },
-        { view: View.SETTINGS, label: 'Pengaturan', icon: <CogIcon />, roles: [UserRole.ADMIN] },
-    ];
-
-    const navItems = useMemo(() => {
-        if (!currentUser) return [];
-        const allowedViews = currentUser.allowed_views || [];
-        const userRole = currentUser.role?.toLowerCase();
-        
-        return allNavItems.filter(item => {
-            // If explicit allowed_views exist, use them
-            if (allowedViews.length > 0) {
-                return allowedViews.includes(item.view);
-            }
-            
-            // Otherwise fallback to role-based defaults
-            if (userRole === 'admin') return true; // Admin sees everything if no specific views set
-            if (userRole === 'kasir') {
-                return [View.DASHBOARD, View.POS, View.EXPENSES, View.PRODUCTS].includes(item.view);
-            }
-            
-            return false;
-        });
-    }, [currentUser]);
-
-    const currentNavItem = useMemo(() => navItems.find(item => item.view === currentView), [navItems, currentView]);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsDropdownOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
+const Header: React.FC<HeaderProps> = ({ currentView, currentUser, onRefresh, isRefreshing, onLogout, isDarkMode, onToggleDarkMode }) => {
+    const initials = currentUser?.name ? currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'NS';
     
     return (
-        <header className="bg-[#2F4B8B] text-white shadow-lg flex justify-between items-center px-6 h-20">
-            <div className="flex items-center space-x-4">
-                <img src="https://wqgbkwujfxdwlywxrjup.supabase.co/storage/v1/object/public/publik/Nala%20Sentral.png" alt="Nala Sentral Logo" className="h-12 w-auto" />
-                <h1 className="text-2xl font-bold">Nala Sentral</h1>
+        <header className="bg-white dark:bg-slate-900 border-b border-slate-150/40 dark:border-slate-800 px-6 py-4 flex justify-between items-center shrink-0 shadow-sm transition-colors duration-250">
+            <div className="flex items-center space-x-3">
+                <img src="https://wqgbkwujfxdwlywxrjup.supabase.co/storage/v1/object/public/publik/Nala%20Sentral.png" alt="Nala Sentral Logo" className="h-8 w-auto hover:scale-105 transition-transform" />
+                <div>
+                    <h1 className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight leading-none font-display">Nala Sentral</h1>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-450 font-bold tracking-wide uppercase mt-1.5 inline-block">{currentView}</span>
+                </div>
             </div>
             
-            {currentUser && <div className="relative flex items-center space-x-2" ref={dropdownRef}>
+            <div className="flex items-center space-x-2.5">
+                {/* Dark Mode Toggle */}
                 <button 
-                    onClick={() => setIsDropdownOpen(prev => !prev)}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-full transition-colors duration-200 bg-blue-900/50 hover:bg-blue-700/60"
+                    onClick={onToggleDarkMode} 
+                    title={isDarkMode ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
+                    className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-100 border border-slate-100/55 dark:border-slate-750 transition-all flex items-center justify-center cursor-pointer"
                 >
-                    <span className="font-semibold">{currentNavItem?.label}</span>
-                    <MenuIcon className="w-5 h-5" />
+                    {isDarkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
                 </button>
-                
-                {isDropdownOpen && (
-                     <div className="absolute right-0 top-full mt-2 w-56 origin-top-right rounded-md shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-[100] border border-gray-100">
-                        <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                            {navItems.map(item => (
-                                <button
-                                    key={item.view}
-                                    onClick={() => {
-                                        setView(item.view);
-                                        setIsDropdownOpen(false);
-                                    }}
-                                    className={`flex items-center w-full text-left px-4 py-2 text-sm transition-colors ${currentView === item.view ? 'bg-blue-100 text-[#2F4B8B]' : 'text-gray-700 hover:bg-gray-100'}`}
-                                    role="menuitem"
-                                >
-                                    {React.cloneElement(item.icon, { className: 'w-5 h-5 mr-3' })}
-                                    <span>{item.label}</span>
-                                </button>
-                            ))}
-                        </div>
+
+                {/* Refresh Trigger Button */}
+                <button 
+                    onClick={onRefresh} 
+                    title="Segarkan Data"
+                    className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 border border-slate-100/50 dark:border-slate-700 transition-all flex items-center justify-center cursor-pointer"
+                >
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-slate-900 dark:text-slate-100' : ''}`} />
+                </button>
+            
+                {/* Profile Circle Details */}
+                <div className="flex items-center bg-slate-50/80 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-750 p-1.5 pr-3.5 rounded-full">
+                    <div className="w-6 h-6 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[10px] font-black mr-2 shadow-xs shadow-slate-950/20">
+                        {initials}
                     </div>
-                )}
-            </div>}
+                    <div className="hidden xs:block text-left">
+                        <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 leading-none truncate max-w-[80px]">{currentUser.name}</p>
+                        <p className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 leading-none mt-1 uppercase tracking-widest">{currentUser.role}</p>
+                    </div>
+                </div>
+            </div>
         </header>
     );
 };
 
 const LoadingOverlay: React.FC = () => (
-    <div className="fixed inset-0 bg-white bg-opacity-80 flex flex-col justify-center items-center z-[999]">
-         <img src="https://wqgbkwujfxdwlywxrjup.supabase.co/storage/v1/object/public/publik/Nala%20Sentral.png" alt="Nala Sentral Logo" className="h-20 w-auto animate-pulse" />
-        <p className="text-[#2F4B8B] font-semibold mt-4">Memuat data...</p>
+    <div className="fixed inset-0 bg-slate-50 bg-opacity-95 flex flex-col justify-center items-center z-[999] select-none font-sans">
+        <div className="relative">
+            <div className="absolute inset-0 rounded-full border-4 border-slate-100 animate-ping opacity-75"></div>
+            <img src="https://wqgbkwujfxdwlywxrjup.supabase.co/storage/v1/object/public/publik/Nala%20Sentral.png" alt="Nala Sentral Logo" className="h-[72px] w-auto relative z-10 hover:scale-110 transition-transform" />
+        </div>
+        <p className="text-slate-800 font-bold text-sm tracking-wide mt-6">Sinkronisasi Database...</p>
+        <p className="text-slate-400 text-xs font-medium mt-1">Mengambil data penjualan real-time</p>
     </div>
 );
 
@@ -133,10 +117,72 @@ const App: React.FC = () => {
   const [latestTransaction, setLatestTransaction] = useState<Transaction | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    return localStorage.getItem('theme') === 'dark';
+  });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+  
+  // Custom Minimalist Mobile/Tablet Redesign states
+  const [viewportMode, setViewportMode] = useState<'smartphone' | 'tablet' | 'full'>('tablet');
+  const [isMoreDrawerOpen, setIsMoreDrawerOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const isFetchingRef = useRef(false);
   const isHandlingSessionRef = useRef(false);
   const lastFetchTimeRef = useRef(0);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchData(false);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 850);
+  };
+
+  const allowedNavItems = useMemo(() => {
+    if (!currentUser) return [];
+    const allowedViews = currentUser.allowed_views || [];
+    const userRole = currentUser.role?.toLowerCase();
+    
+    const allNavItems = [
+      { view: View.POS, label: 'Kasir', icon: <ShoppingCart className="w-4.5 h-4.5" /> },
+      { view: View.DASHBOARD, label: 'Dashboard', icon: <LayoutDashboard className="w-4.5 h-4.5" /> },
+      { view: View.EXPENSES, label: 'Pengeluaran', icon: <Receipt className="w-4.5 h-4.5" /> },
+      { view: View.PRODUCTS, label: 'Produk', icon: <Package className="w-4.5 h-4.5" /> },
+      { view: View.REPORTS, label: 'Laporan', icon: <BarChart3 className="w-4.5 h-4.5" /> },
+      { view: View.PRICING_CALCULATOR, label: 'Kalkulator', icon: <Calculator className="w-4.5 h-4.5" /> },
+      { view: View.DATA_MANAGEMENT, label: 'Data', icon: <Database className="w-4.5 h-4.5" /> },
+      { view: View.SETTINGS, label: 'Pengaturan', icon: <Settings className="w-4.5 h-4.5" /> },
+    ];
+
+    return allNavItems.filter(item => {
+      if (allowedViews.length > 0) {
+        return allowedViews.includes(item.view);
+      }
+      if (userRole === 'admin') return true;
+      if (userRole === 'kasir') {
+        return [View.DASHBOARD, View.POS, View.EXPENSES, View.PRODUCTS].includes(item.view);
+      }
+      return false;
+    });
+  }, [currentUser]);
 
   const fetchData = async (isBackground = false) => {
     // Prevent too frequent background fetches (e.g., within 30 seconds)
@@ -439,6 +485,38 @@ const App: React.FC = () => {
     }
   };
 
+  if (showSplash) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-cyan-400 via-rose-350 to-blue-600 flex flex-col justify-center items-center z-[9999] select-none text-white p-6 font-sans">
+        <div className="text-center space-y-6 flex flex-col items-center max-w-sm animate-fade-in">
+          <div className="relative p-3 bg-white/20 backdrop-blur-md rounded-[2.2rem] shadow-2xl border border-white/20">
+            <img 
+              src="https://wqgbkwujfxdwlywxrjup.supabase.co/storage/v1/object/public/publik/Nala%20Sentral.png" 
+              alt="Nala Sentral Logo" 
+              className="h-28 w-auto relative z-10 transition-transform scale-105" 
+            />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-black tracking-tight font-display drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)]">
+              Toko Nala Sentral
+            </h1>
+            <p className="text-[10px] font-black text-cyan-100 tracking-widest uppercase drop-shadow-sm font-sans">
+              PLATFORM POS PREMIUM
+            </p>
+          </div>
+          <p className="text-xs font-bold text-slate-800 bg-white/90 hover:scale-[1.02] transition-transform px-5 py-3 rounded-2xl shadow-lg border border-slate-100">
+            “Order sekarang lebih mudah lewat Toko Nala”
+          </p>
+          <div className="flex space-x-2.5 pt-6">
+            <span className="w-2 h-2 rounded-full bg-white opacity-40 animate-bounce duration-300"></span>
+            <span className="w-2 h-2 rounded-full bg-white opacity-60 animate-bounce [animation-delay:150ms]"></span>
+            <span className="w-2 h-2 rounded-full bg-white opacity-80 animate-bounce [animation-delay:300ms]"></span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
       return <LoadingOverlay />;
   }
@@ -587,12 +665,260 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header currentView={view} setView={setView} currentUser={currentUser} />
-      <main className="flex-grow">
-        {renderView()}
-      </main>
-      <Footer currentUser={currentUser} onLogout={handleLogout} />
+    <div className="min-h-screen bg-gradient-to-tr from-slate-100 via-slate-50/75 to-slate-100 dark:from-slate-950 dark:via-slate-900/60 dark:to-slate-950 flex flex-col justify-start items-center p-0 md:p-6 transition-all duration-300 font-sans selection:bg-slate-200 dark:selection:bg-slate-800">
+      
+      {/* Device Preset Switcher for Desktop Viewports */}
+      {currentUser && (
+        <div className="hidden md:flex items-center space-x-1 bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-slate-200/60 dark:border-slate-800/80 p-1 rounded-full shadow-sm shadow-slate-100/50 dark:shadow-none mb-4 scale-95 origin-center transition-colors">
+          <button 
+            onClick={() => setViewportMode('smartphone')} 
+            className={`flex items-center space-x-1.5 px-4.5 py-2 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer ${viewportMode === 'smartphone' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm shadow-slate-950/15' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
+          >
+            <Smartphone size={13} />
+            <span>Smartphone</span>
+          </button>
+          
+          <button 
+            onClick={() => setViewportMode('tablet')} 
+            className={`flex items-center space-x-1.5 px-4.5 py-2 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer ${viewportMode === 'tablet' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm shadow-slate-950/15' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
+          >
+            <Tablet size={13} />
+            <span>Tablet View</span>
+          </button>
+          
+          <button 
+            onClick={() => setViewportMode('full')} 
+            className={`flex items-center space-x-1.5 px-4.5 py-2 rounded-full text-xs font-bold tracking-tight transition-all cursor-pointer ${viewportMode === 'full' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm shadow-slate-950/15' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
+          >
+            <Monitor size={13} />
+            <span>Responsive / Full</span>
+          </button>
+        </div>
+      )}
+
+      {/* Main Responsive Viewport Container */}
+      <div 
+        className={`w-full bg-white dark:bg-slate-900 flex flex-col relative transition-all duration-350 select-none ${
+          viewportMode === 'smartphone' 
+            ? 'md:max-w-[420px] md:h-[860px] md:rounded-[2.2rem] md:shadow-2xl md:border md:border-slate-200/80 dark:border-slate-800/80 md:my-auto md:overflow-hidden md:ring-8 md:ring-slate-900/5 dark:ring-slate-950/20' 
+            : viewportMode === 'tablet' 
+            ? 'md:max-w-[980px] md:h-[840px] md:rounded-[1.8rem] md:shadow-2xl md:border md:border-slate-200/80 dark:border-slate-800/80 md:my-auto md:overflow-hidden md:ring-8 md:ring-slate-900/5 dark:ring-slate-950/20' 
+            : 'w-full min-h-screen'
+        }`}
+      >
+        {/* Top Status Title Bar */}
+        <Header 
+          currentView={view} 
+          setView={setView} 
+          currentUser={currentUser} 
+          onRefresh={handleManualRefresh}
+          isRefreshing={isRefreshing}
+          onLogout={handleLogout}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        />
+        
+        {/* Main Viewport Content Surface */}
+        <main className="flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-6 bg-slate-50/50 dark:bg-slate-950/40">
+          {renderView()}
+        </main>
+
+        {/* Persistent Bottom Tabbed Menu Bar */}
+        <nav className="bg-white dark:bg-slate-900 border-t border-slate-100/80 dark:border-slate-800/80 px-2.5 py-2.5 flex justify-around items-center shrink-0 shadow-[0_-4px_25px_rgba(15,23,42,0.03)] dark:shadow-none relative z-40 transition-colors duration-250">
+          {allowedNavItems.slice(0, allowedNavItems.length <= 5 ? allowedNavItems.length : 4).map(item => {
+            const isActive = view === item.view && !isMoreDrawerOpen;
+            
+            // Dynamic modern color assignment
+            let buttonStyle = 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50/60 dark:hover:bg-slate-800/30';
+            let iconStyle = 'text-slate-400 dark:text-slate-500';
+            
+            if (isActive) {
+              switch (item.view) {
+                case View.POS:
+                  buttonStyle = 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-100/50 dark:border-emerald-800/50 font-extrabold shadow-sm shadow-emerald-500/5 ring-1 ring-emerald-500/10';
+                  iconStyle = 'text-emerald-600 dark:text-emerald-400';
+                  break;
+                case View.DASHBOARD:
+                  buttonStyle = 'text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/40 border-blue-100/50 dark:border-blue-800/50 font-extrabold shadow-sm shadow-blue-500/5 ring-1 ring-blue-500/10';
+                  iconStyle = 'text-blue-600 dark:text-blue-400';
+                  break;
+                case View.EXPENSES:
+                  buttonStyle = 'text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/40 border-rose-100/50 dark:border-rose-800/50 font-extrabold shadow-sm shadow-rose-500/5 ring-1 ring-rose-500/10';
+                  iconStyle = 'text-rose-600 dark:text-rose-400';
+                  break;
+                case View.PRODUCTS:
+                  buttonStyle = 'text-violet-600 dark:text-violet-400 bg-violet-50/80 dark:bg-violet-950/40 border-violet-100/50 dark:border-violet-800/50 font-extrabold shadow-sm shadow-violet-500/5 ring-1 ring-violet-500/10';
+                  iconStyle = 'text-violet-600 dark:text-violet-400';
+                  break;
+                case View.REPORTS:
+                  buttonStyle = 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-100/50 dark:border-indigo-800/50 font-extrabold shadow-sm shadow-indigo-500/5 ring-1 ring-indigo-500/10';
+                  iconStyle = 'text-indigo-600 dark:text-indigo-400';
+                  break;
+                case View.PRICING_CALCULATOR:
+                  buttonStyle = 'text-cyan-600 dark:text-cyan-400 bg-cyan-50/80 dark:bg-cyan-950/40 border-cyan-100/50 dark:border-cyan-800/50 font-extrabold shadow-sm shadow-cyan-500/5 ring-1 ring-cyan-500/10';
+                  iconStyle = 'text-cyan-600 dark:text-cyan-400';
+                  break;
+                case View.DATA_MANAGEMENT:
+                  buttonStyle = 'text-teal-600 dark:text-teal-400 bg-teal-50/80 dark:bg-teal-950/40 border-teal-100/50 dark:border-teal-800/50 font-extrabold shadow-sm shadow-teal-500/5 ring-1 ring-teal-500/10';
+                  iconStyle = 'text-teal-600 dark:text-teal-400';
+                  break;
+                default:
+                  buttonStyle = 'text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-800 font-extrabold';
+                  iconStyle = 'text-slate-900 dark:text-white';
+              }
+            }
+
+            return (
+              <button
+                key={item.view}
+                onClick={() => {
+                  setView(item.view);
+                  setIsMoreDrawerOpen(false);
+                }}
+                className={`flex flex-col items-center justify-center space-y-1 py-1.5 px-3.5 rounded-xl border border-transparent transition-all duration-200 cursor-pointer ${buttonStyle}`}
+              >
+                <div className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'scale-100'} ${iconStyle}`}>
+                  {item.icon}
+                </div>
+                <span className="text-[10px] font-bold tracking-tight">{item.label}</span>
+              </button>
+            );
+          })}
+          
+          {/* Menu Drawer Toggle button */}
+          {allowedNavItems.length > 5 && (
+            <button
+              onClick={() => setIsMoreDrawerOpen(prev => !prev)}
+              className={`flex flex-col items-center justify-center space-y-1 py-1.5 px-3.5 rounded-xl border border-transparent transition-all duration-200 cursor-pointer ${
+                isMoreDrawerOpen 
+                  ? 'text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 font-extrabold shadow-sm' 
+                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50/60 dark:hover:bg-slate-800/30'
+              }`}
+            >
+              <LucidMenu className="w-4.5 h-4.5 text-current" />
+              <span className="text-[10px] font-bold tracking-tight">Lainnya</span>
+            </button>
+          )}
+        </nav>
+
+        {/* Slide-Up Bottom Drawer Menu Panel (Perfectly Bound Within the active Viewport) */}
+        {isMoreDrawerOpen && (
+          <div className="absolute inset-0 bg-slate-950/40 dark:bg-slate-950/70 backdrop-blur-xs z-[100] flex flex-col justify-end transition-all duration-300 animate-fade-in">
+            <div className="absolute inset-0" onClick={() => setIsMoreDrawerOpen(false)} />
+            <div className="bg-white dark:bg-slate-900 rounded-t-[2rem] shadow-2xl relative z-10 p-6 flex flex-col max-h-[85%] border-t border-slate-100/30 dark:border-slate-800/80 animate-slide-up transition-colors duration-250">
+              {/* Top Handle Drag-line */}
+              <div 
+                className="w-10 h-1 bg-slate-200 dark:bg-slate-700/80 rounded-full mx-auto mb-5 cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" 
+                onClick={() => setIsMoreDrawerOpen(false)} 
+              />
+              
+              <div className="flex justify-between items-center mb-5">
+                <div>
+                  <h3 className="font-extrabold text-slate-800 dark:text-slate-150 text-sm tracking-tight font-display">Fitur Lainnya</h3>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">Akses menu administrasi dan kelola toko</p>
+                </div>
+                <button 
+                  onClick={() => setIsMoreDrawerOpen(false)} 
+                  className="p-1 px-[7px] py-[7px] rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              
+              {/* Navigation Grid inside the popover drawer */}
+              <div className="grid grid-cols-2 gap-2.5 overflow-y-auto pb-4 pr-0.5">
+                {allowedNavItems.slice(4).map(item => {
+                  const isActive = view === item.view;
+                  
+                  // Specific colorful classes for active drawer options
+                  let drawerItemColors = 'bg-slate-50/60 dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-705';
+                  let iconColor = 'text-slate-400 dark:text-slate-500';
+
+                  if (isActive) {
+                    switch (item.view) {
+                      case View.EXPENSES:
+                        drawerItemColors = 'bg-rose-50 border-rose-150/60 dark:bg-rose-950/30 text-rose-600 dark:text-rose-450 dark:border-rose-900/40 shadow-sm ring-1 ring-rose-500/10';
+                        iconColor = 'text-rose-600 dark:text-rose-400';
+                        break;
+                      case View.PRODUCTS:
+                        drawerItemColors = 'bg-violet-50 border-violet-150/60 dark:bg-violet-950/30 text-violet-600 dark:text-violet-450 dark:border-violet-900/40 shadow-sm ring-1 ring-violet-500/10';
+                        iconColor = 'text-violet-600 dark:text-violet-400';
+                        break;
+                      case View.REPORTS:
+                        drawerItemColors = 'bg-indigo-50 border-indigo-150/60 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-450 dark:border-indigo-900/40 shadow-sm ring-1 ring-indigo-500/10';
+                        iconColor = 'text-indigo-600 dark:text-indigo-400';
+                        break;
+                      case View.PRICING_CALCULATOR:
+                        drawerItemColors = 'bg-cyan-50 border-cyan-150/60 dark:bg-cyan-950/30 text-cyan-600 dark:text-cyan-450 dark:border-cyan-900/40 shadow-sm ring-1 ring-cyan-500/10';
+                        iconColor = 'text-cyan-600 dark:text-cyan-400';
+                        break;
+                      case View.DATA_MANAGEMENT:
+                        drawerItemColors = 'bg-teal-50 border-teal-150/60 dark:bg-teal-950/30 text-teal-600 dark:text-teal-450 dark:border-teal-900/40 shadow-sm ring-1 ring-teal-500/10';
+                        iconColor = 'text-teal-600 dark:text-teal-400';
+                        break;
+                      case View.SETTINGS:
+                        drawerItemColors = 'bg-slate-100 border-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-100 dark:border-slate-700 shadow-sm';
+                        iconColor = 'text-slate-800 dark:text-slate-200';
+                        break;
+                      default:
+                        drawerItemColors = 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-md';
+                        iconColor = 'text-white dark:text-slate-900';
+                    }
+                  }
+
+                  return (
+                    <button
+                      key={item.view}
+                      onClick={() => {
+                        setView(item.view);
+                        setIsMoreDrawerOpen(false);
+                      }}
+                      className={`flex items-center space-x-2.5 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer ${drawerItemColors}`}
+                    >
+                      <div className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'scale-100'} ${iconColor}`}>
+                        {item.icon}
+                      </div>
+                      <span className="text-[11px] font-bold tracking-tight">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* Profile Card and dynamic signout button */}
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4.5 mt-auto flex flex-col space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 flex items-center justify-center text-[10px] font-extrabold shadow-sm border border-slate-200/40 dark:border-slate-750">
+                      {currentUser?.name ? currentUser.name[0].toUpperCase() : 'N'}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-extrabold text-slate-800 dark:text-slate-200 leading-none">{currentUser.name}</p>
+                      <p className="text-[8px] text-slate-400 dark:text-slate-500 font-bold leading-none mt-1.5 uppercase tracking-widest">{currentUser.role}</p>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={() => {
+                      setIsMoreDrawerOpen(false);
+                      handleLogout();
+                    }}
+                    className="flex items-center space-x-1 px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-red-650 hover:bg-red-50 dark:hover:bg-red-950/45 hover:text-red-700 hover:border-red-100 dark:hover:border-red-900/60 border border-transparent transition-all cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Keluar Sesi</span>
+                  </button>
+                </div>
+                
+                <p className="text-center text-slate-405 dark:text-slate-550 text-[8px] tracking-wider uppercase">
+                  &copy; {new Date().getFullYear()} Toko Nala Snack. All rights reserved.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Popups & Dialogs Renderings */}
       <ReceiptModal 
         transaction={latestTransaction}
         products={products}

@@ -13,10 +13,10 @@ interface ReportsViewProps {
   expenses: Expense[];
 }
 
-const StatCard: React.FC<{ title: string; value: string | number; color?: string }> = ({ title, value, color = 'text-blue-900' }) => (
-    <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-[#2F4B8B]">
-        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{title}</h3>
-        <p className={`mt-2 text-2xl font-bold ${color}`}>{value}</p>
+const StatCard: React.FC<{ title: string; value: string | number; color?: string }> = ({ title, value, color = 'text-slate-800 dark:text-slate-100' }) => (
+    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100/80 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(15,23,42,0.015)] transition-all hover:translate-y-[-2px] duration-200">
+        <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{title}</span>
+        <p className={`mt-2 text-base font-black tracking-tight leading-none ${color}`}>{value}</p>
     </div>
 );
 
@@ -297,108 +297,125 @@ const ReportsView: React.FC<ReportsViewProps> = ({ transactions, products, expen
   }, [viewMode, filteredTransactions, filteredExpenses, selectedMonth]);
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 no-print">
-        <h1 className="text-3xl font-bold text-blue-900">Laporan Keuangan</h1>
-        <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center space-x-2 bg-white p-1 rounded-lg shadow-sm border border-gray-200">
-                <button onClick={() => setViewMode('daily')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'daily' ? 'bg-[#2F4B8B] text-white' : 'text-gray-600 hover:bg-blue-100'}`}>Harian</button>
-                <button onClick={() => setViewMode('monthly')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'monthly' ? 'bg-[#2F4B8B] text-white' : 'text-gray-600 hover:bg-blue-100'}`}>Bulanan</button>
+    <div className="p-0.5 space-y-4 font-sans animate-fade-in text-slate-800 dark:text-slate-100">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b border-slate-150/40 dark:border-slate-800/80 space-y-4 md:space-y-0 no-print">
+        <div>
+          <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 tracking-wider uppercase">Analisis & Transaksi</h2>
+          <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">Laporan Keuangan Toko</h1>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Pantau omzet, laba kotor, laba bersih, serta tren performa barang</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/50 dark:border-slate-750">
+                <button onClick={() => setViewMode('daily')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'daily' ? 'bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100 shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-slate-350'}`}>Harian</button>
+                <button onClick={() => setViewMode('monthly')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'monthly' ? 'bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100 shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-650 dark:hover:text-slate-350'}`}>Bulanan</button>
             </div>
-            <button onClick={exportToExcel} className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-700 transition-colors">
-                <DownloadIcon className="w-5 h-5" />
-                <span>Excel</span>
+            <button onClick={exportToExcel} className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm cursor-pointer transition-colors">
+                <DownloadIcon className="w-4 h-4" />
+                <span>Unduh Excel</span>
             </button>
-            <button onClick={handlePrint} className="flex items-center space-x-2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-800 transition-colors">
-                <PrintIcon className="w-5 h-5" />
-                <span>Cetak A4</span>
+            <button onClick={handlePrint} className="flex items-center space-x-1.5 bg-slate-950 dark:bg-slate-100 text-white dark:text-slate-950 px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-slate-850 dark:hover:bg-slate-200 cursor-pointer transition-all">
+                <PrintIcon className="w-4 h-4" />
+                <span>Cetak POS</span>
             </button>
         </div>
       </div>
       
-      <div className="mb-6 max-w-xs no-print">
-      {viewMode === 'daily' ? (
-          <input 
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-      ) : (
-          <input 
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-3 no-print">
+        <div className="w-full sm:max-w-xs">
+          {viewMode === 'daily' ? (
+              <input 
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 rounded-xl font-bold focus:outline-none focus:border-slate-450 dark:focus:border-slate-655 shadow-xs"
+              />
+          ) : (
+              <input 
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 rounded-xl font-bold focus:outline-none focus:border-slate-450 dark:focus:border-slate-655 shadow-xs"
+              />
+          )}
+        </div>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+          Filter: <span className="text-slate-700 dark:text-slate-350">{viewMode === 'daily' ? selectedDate : selectedMonth}</span>
+        </p>
       </div>
 
       <div className="print-only mb-8 text-center hidden">
-          <h1 className="text-2xl font-bold text-blue-900">LAPORAN KEUANGAN NALA SENTRAL</h1>
-          <p className="text-gray-600">Periode: {viewMode === 'daily' ? selectedDate : selectedMonth}</p>
-          <div className="mt-4 border-t border-b py-4 grid grid-cols-3 gap-4">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">LAPORAN KEUANGAN TOKO NALA SENTRAL</h1>
+          <p className="text-gray-500">Periode: {viewMode === 'daily' ? selectedDate : selectedMonth}</p>
+          <div className="mt-4 border-t border-b border-slate-100 dark:border-slate-800 py-4 grid grid-cols-3 gap-4">
               <div>
-                  <p className="text-xs text-gray-500 uppercase">Total Omzet</p>
+                  <p className="text-xs text-gray-400 uppercase">Total Omzet</p>
                   <p className="font-bold">Rp {totalRevenue.toLocaleString('id-ID')}</p>
               </div>
               <div>
-                  <p className="text-xs text-gray-500 uppercase">Laba Kotor</p>
+                  <p className="text-xs text-gray-400 uppercase">Laba Kotor</p>
                   <p className="font-bold text-green-600">Rp {grossProfit.toLocaleString('id-ID')}</p>
               </div>
               <div>
-                  <p className="text-xs text-gray-500 uppercase">Laba Bersih</p>
-                  <p className="font-bold text-blue-800">Rp {netProfit.toLocaleString('id-ID')}</p>
+                  <p className="text-xs text-gray-400 uppercase">Laba Bersih</p>
+                  <p className="font-bold text-blue-600">Rp {netProfit.toLocaleString('id-ID')}</p>
               </div>
           </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 mb-8 no-print">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-4 no-print">
         <StatCard title="Omzet" value={`Rp ${totalRevenue.toLocaleString('id-ID')}`} />
-        <StatCard title="Modal" value={`Rp ${totalCOGS.toLocaleString('id-ID')}`} color="text-orange-600" />
-        <StatCard title="Laba Kotor" value={`Rp ${grossProfit.toLocaleString('id-ID')}`} color="text-green-600" />
-        <StatCard title="Pengeluaran" value={`Rp ${totalExpenses.toLocaleString('id-ID')}`} color="text-red-600" />
-        <StatCard title="Laba Bersih" value={`Rp ${netProfit.toLocaleString('id-ID')}`} color={netProfit >= 0 ? 'text-green-700' : 'text-red-700'} />
-        <StatCard title="Terjual" value={`${totalItemsSold} pcs`} color="text-blue-700" />
-        <StatCard title="Nilai Stok" value={`Rp ${totalStockValue.toLocaleString('id-ID')}`} color="text-purple-700" />
+        <StatCard title="Modal" value={`Rp ${totalCOGS.toLocaleString('id-ID')}`} color="text-orange-600 dark:text-orange-400" />
+        <StatCard title="Laba Kotor" value={`Rp ${grossProfit.toLocaleString('id-ID')}`} color="text-emerald-600 dark:text-emerald-400" />
+        <StatCard title="Beban Biya" value={`Rp ${totalExpenses.toLocaleString('id-ID')}`} color="text-rose-600 dark:text-rose-400" />
+        <StatCard title="Laba Bersih" value={`Rp ${netProfit.toLocaleString('id-ID')}`} color={netProfit >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-500'} />
+        <StatCard title="Terjual" value={`${totalItemsSold} pcs`} color="text-indigo-600 dark:text-indigo-400" />
+        <StatCard title="Aset/Stok" value={`Rp ${totalStockValue.toLocaleString('id-ID')}`} color="text-purple-600 dark:text-purple-400" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4.5">
+        <div className="lg:col-span-2 space-y-4">
             {/* Chart Section */}
-            <div className="bg-white p-6 rounded-xl shadow-md no-print">
-                <h2 className="text-xl font-bold text-blue-900 mb-4">Grafik Pertumbuhan</h2>
-                <div className="relative h-80">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-150/50 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(15,23,42,0.015)] no-print">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xs font-black text-slate-400 dark:text-slate-550 uppercase tracking-wider">Grafik Pertumbuhan</h2>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">Terupdate otomatis</span>
+                </div>
+                <div className="relative h-72">
                     <canvas ref={chartRef}></canvas>
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-md">
-                <h2 className="text-xl font-bold text-blue-900 mb-4">Produk Terlaris</h2>
-                <div className="overflow-x-auto mb-4">
-                    <table className="w-full text-sm text-left text-gray-500">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-150/50 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(15,23,42,0.015)]">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xs font-black text-slate-400 dark:text-slate-550 uppercase tracking-wider">Produk Terlaris</h2>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-555 font-bold">{bestSellingProducts.length} produk</span>
+                </div>
+                <div className="overflow-x-auto mb-3">
+                    <table className="w-full text-left font-sans">
+                        <thead className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50 dark:bg-slate-900/50">
                             <tr>
-                                <th className="px-4 py-2">Produk</th>
-                                <th className="px-4 py-2 text-right">Terjual</th>
-                                <th className="px-4 py-2 text-right">Omzet</th>
-                                <th className="px-4 py-2 text-right">Modal</th>
-                                <th className="px-4 py-2 text-right">Laba</th>
+                                <th className="px-4 py-2.5">Nama Produk</th>
+                                <th className="px-4 py-2.5 text-right">Terjual</th>
+                                <th className="px-4 py-2.5 text-right">Omzet</th>
+                                <th className="px-4 py-2.5 text-right">Biaya Modal</th>
+                                <th className="px-4 py-2.5 text-right">Laba</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs text-slate-705 dark:text-slate-350">
                             {paginatedBestSelling.map((item, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium text-gray-900">{item.name} <span className="text-xs text-gray-500">({item.size})</span></td>
-                                    <td className="px-4 py-3 text-right font-bold text-blue-700">{item.quantity} pcs</td>
-                                    <td className="px-4 py-3 text-right">Rp {item.revenue.toLocaleString('id-ID')}</td>
-                                    <td className="px-4 py-3 text-right text-orange-600">Rp {item.cost.toLocaleString('id-ID')}</td>
-                                    <td className="px-4 py-3 text-right text-green-600 font-semibold">Rp {item.profit.toLocaleString('id-ID')}</td>
+                                <tr key={index} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                                    <td className="px-4 py-3 font-bold text-slate-800 dark:text-slate-150 whitespace-nowrap">
+                                        {item.name} <span className="text-[10px] text-slate-400 dark:text-slate-550 font-medium">({item.size})</span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-bold text-indigo-600 dark:text-indigo-400 font-mono">{item.quantity} pcs</td>
+                                    <td className="px-4 py-3 text-right font-mono">Rp{item.revenue.toLocaleString('id-ID')}</td>
+                                    <td className="px-4 py-3 text-right text-orange-600 dark:text-orange-400 font-mono">Rp{item.cost.toLocaleString('id-ID')}</td>
+                                    <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-455 font-black font-mono">Rp{item.profit.toLocaleString('id-ID')}</td>
                                 </tr>
                             ))}
                             {paginatedBestSelling.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">Tidak ada data produk terjual</td>
+                                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400 dark:text-slate-650">Tidak ada data produk terjual</td>
                                 </tr>
                             )}
                         </tbody>
@@ -414,70 +431,74 @@ const ReportsView: React.FC<ReportsViewProps> = ({ transactions, products, expen
             </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-md h-fit">
-            <h2 className="text-xl font-bold text-blue-900 mb-4">Ringkasan Transaksi</h2>
-            <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                    <span className="text-sm text-gray-600">Jumlah Transaksi</span>
-                    <span className="font-bold text-blue-900">{totalTransactions}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                    <span className="text-sm text-gray-600">Rata-rata Transaksi</span>
-                    <span className="font-bold text-green-900">Rp {(totalTransactions > 0 ? Math.round(totalRevenue / totalTransactions) : 0).toLocaleString('id-ID')}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                    <span className="text-sm text-gray-600">Total Barang</span>
-                    <span className="font-bold text-orange-900">{totalItemsSold} pcs</span>
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-150/50 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(15,23,42,0.015)] h-fit space-y-5">
+            <div>
+                <h2 className="text-xs font-black text-slate-400 dark:text-slate-550 uppercase tracking-wider mb-3">Ringkasan Sesi</h2>
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-855 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                        <span className="text-xs text-slate-550 dark:text-slate-400 font-medium font-sans">Banyak Transaksi</span>
+                        <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 font-mono">{totalTransactions} kali</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-855 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                        <span className="text-xs text-slate-550 dark:text-slate-400 font-medium font-sans">Rata-rata Keranjang</span>
+                        <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 font-mono">Rp{(totalTransactions > 0 ? Math.round(totalRevenue / totalTransactions) : 0).toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-855 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                        <span className="text-xs text-slate-550 dark:text-slate-400 font-medium font-sans">Banyak Barang Laku</span>
+                        <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100 font-mono">{totalItemsSold} pcs</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="mt-8 mb-4">
-                <h3 className="text-lg font-bold text-blue-900 mb-2">Daftar Transaksi</h3>
-                <div className="relative">
-                    <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="border-t border-slate-100 dark:border-slate-800/65 pt-4">
+                <h3 className="text-xs font-black text-slate-400 dark:text-slate-550 uppercase tracking-wider mb-3">Daftar Transaksi</h3>
+                <div className="relative mb-3">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <SearchIcon className="text-slate-400 w-3.5 h-3.5" />
+                    </div>
                     <input 
                         type="text" 
                         value={transactionSearch}
                         onChange={(e) => { setTransactionSearch(e.target.value); setTransactionPage(1); }}
                         placeholder="Cari kode atau kasir..."
-                        className="w-full pl-9 pr-4 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full pl-9 pr-3 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 rounded-xl font-semibold focus:outline-none focus:border-slate-400 dark:focus:border-slate-600 shadow-xs"
                     />
                 </div>
-            </div>
-            
-            <div className="mb-4">
-                {paginatedTransactions.length > 0 ? (
-                <ul className="divide-y divide-gray-100">
-                    {paginatedTransactions.map(t => (
-                        <li key={t.id} className="py-3">
-                            <div className="flex justify-between">
-                                <span className="font-medium text-gray-800">{t.transaction_code}</span>
-                                <div className="text-right">
-                                    <span className="font-semibold text-gray-800">Rp {t.total.toLocaleString('id-ID')}</span>
-                                    {t.discount_amount && t.discount_amount > 0 && (
-                                        <p className="text-[10px] text-red-500 font-bold">Disc: -Rp {t.discount_amount.toLocaleString('id-ID')}</p>
-                                    )}
+                
+                <div className="mb-3 max-h-72 overflow-y-auto pr-0.5 whitespace-nowrap">
+                    {paginatedTransactions.length > 0 ? (
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800/70 text-xs">
+                        {paginatedTransactions.map(t => (
+                            <li key={t.id} className="py-2.5 hover:bg-slate-50/20 dark:hover:bg-slate-800/10">
+                                <div className="flex justify-between">
+                                    <span className="font-bold text-slate-800 dark:text-slate-150 font-mono">{t.transaction_code}</span>
+                                    <div className="text-right">
+                                        <span className="font-extrabold text-slate-850 dark:text-slate-100">Rp{t.total.toLocaleString('id-ID')}</span>
+                                        {t.discount_amount && t.discount_amount > 0 && (
+                                            <p className="text-[10px] text-red-500 dark:text-red-400 font-bold leading-none mt-0.5">Disc: -Rp{t.discount_amount.toLocaleString('id-ID')}</p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>{new Date(t.date).toLocaleTimeString('id-ID')}</span>
-                                <span>{t.cashier_name}</span>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-                ) : (
-                    <p className="text-gray-500 text-center py-4">Tidak ada data.</p>
-                )}
-            </div>
+                                <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                                    <span>{new Date(t.date).toLocaleTimeString('id-ID')}</span>
+                                    <span className="font-bold">{t.cashier_name}</span>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                    ) : (
+                        <p className="text-slate-450 dark:text-slate-600 text-center py-4 font-semibold">Tidak ada data.</p>
+                    )}
+                </div>
 
-            <Pagination 
-                currentPage={transactionPage}
-                totalPages={totalTransactionPages}
-                onPageChange={setTransactionPage}
-                totalItems={searchedTransactions.length}
-                itemsPerPage={itemsPerPage}
-            />
+                <Pagination 
+                    currentPage={transactionPage}
+                    totalPages={totalTransactionPages}
+                    onPageChange={setTransactionPage}
+                    totalItems={searchedTransactions.length}
+                    itemsPerPage={itemsPerPage}
+                />
+            </div>
         </div>
       </div>
 
@@ -486,14 +507,13 @@ const ReportsView: React.FC<ReportsViewProps> = ({ transactions, products, expen
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { padding: 0; margin: 0; background: white; color: black; }
-            .p-6 { padding: 0 !important; }
-            .shadow-md, .shadow-xl { box-shadow: none !important; border: 1px solid #eee; }
+            .p-0.5 { padding: 0 !important; }
+            .shadow-md, .shadow-2xl { box-shadow: none !important; border: 1px solid #eee; }
             .grid { display: block !important; }
             .lg\\:col-span-2, .h-fit { width: 100% !important; margin-bottom: 20px; }
             table { font-size: 10px; width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid #eee; padding: 4px; }
             @page { size: A4; margin: 1.5cm; }
-            h1, h2, h3 { color: #2F4B8B !important; }
         }
       `}} />
     </div>

@@ -85,21 +85,24 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 m-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-blue-900">{productToEdit ? 'Edit Produk' : 'Tambah Produk'}</h2>
-                    <button onClick={onClose}><CloseIcon className="w-6 h-6 text-gray-500 hover:text-gray-800" /></button>
+        <div className="fixed inset-0 bg-slate-950/45 dark:bg-slate-950/75 backdrop-blur-xs flex justify-center items-center z-[115] p-4 font-sans animate-fade-in">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-2xl w-full max-w-md p-5 overflow-hidden max-h-[92vh] flex flex-col transition-all duration-200">
+                <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4 bg-white dark:bg-slate-900 shrink-0">
+                    <div>
+                        <h2 className="text-sm font-extrabold text-slate-850 dark:text-slate-100 tracking-tight">{productToEdit ? 'Edit Data Produk' : 'Tambah Produk Baru'}</h2>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-tight">Lengkapi informasi katalog snack/olahan Anda</p>
+                    </div>
+                    <button onClick={onClose} className="p-1 px-[5px] py-[5px] rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/80 cursor-pointer"><CloseIcon className="w-4 h-4" /></button>
                 </div>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Gambar Produk</label>
-                        <div className="flex items-center space-x-4">
-                            <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border">
+                <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto pr-1 -mr-1 flex-grow">
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mb-2">Gambar Produk</label>
+                        <div className="flex items-center space-x-3 bg-slate-50 dark:bg-slate-850/55 border border-slate-100/80 dark:border-slate-800/70 rounded-xl p-2.5">
+                            <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center overflow-hidden border border-slate-200/50 dark:border-slate-800 shrink-0">
                                 {product.image_url ? (
-                                    <img src={product.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                    <img src={product.image_url} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                 ) : (
-                                    <PackageIcon className="w-8 h-8 text-gray-400" />
+                                    <PackageIcon className="w-6 h-6 text-slate-350 dark:text-slate-600" />
                                 )}
                             </div>
                             <div className="flex-grow">
@@ -110,24 +113,24 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                                     className="hidden" 
                                     accept="image/*"
                                 />
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-1.5">
                                     <button 
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={isUploading}
-                                        className="flex items-center space-x-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-sm font-medium disabled:bg-gray-100 disabled:text-gray-400"
+                                        className="inline-flex items-center space-x-1 px-3 py-1.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-200 rounded-lg transition-colors text-[10px] font-bold disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer shadow-sm"
                                     >
-                                        <UploadIcon className="w-4 h-4" />
-                                        <span>{isUploading ? 'Mengunggah...' : 'Upload Baru'}</span>
+                                        <UploadIcon className="w-3 h-3Color" />
+                                        <span>{isUploading ? 'Unggah...' : 'Upload'}</span>
                                     </button>
                                     
                                     {existingImages.length > 0 && (
                                         <button 
                                             type="button"
                                             onClick={() => setShowImagePicker(!showImagePicker)}
-                                            className="flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+                                            className="inline-flex items-center px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors text-[10px] font-bold cursor-pointer"
                                         >
-                                            <span>{showImagePicker ? 'Tutup Galeri' : 'Pilih dari Galeri'}</span>
+                                            <span>{showImagePicker ? 'Tutup' : 'Dari Galeri'}</span>
                                         </button>
                                     )}
                                     
@@ -135,19 +138,19 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                                         <button 
                                             type="button"
                                             onClick={() => setProduct(prev => ({ ...prev, image_url: DEFAULT_IMAGE_URL }))}
-                                            className="flex items-center space-x-2 px-3 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors text-sm font-medium"
+                                            className="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-950/20 text-red-650 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/40 transition-colors text-[10px] font-bold cursor-pointer"
                                         >
-                                            <span>Reset Default</span>
+                                            <span>Reset</span>
                                         </button>
                                     )}
                                 </div>
-                                <p className="text-[10px] text-gray-500 mt-1">Format: JPG, PNG. Maks: 2MB</p>
+                                <p className="text-[9px] text-slate-450 dark:text-slate-500 mt-1 font-medium">Format: JPG, PNG. Maksimal file: 2MB</p>
                             </div>
                         </div>
 
                         {showImagePicker && existingImages.length > 0 && (
-                            <div className="mt-4 p-3 border rounded-lg bg-gray-50">
-                                <p className="text-xs font-bold text-gray-600 mb-2">Pilih dari gambar yang sudah ada:</p>
+                            <div className="mt-4 p-3 border border-slate-150 dark:border-slate-800 rounded-lg bg-gray-50 dark:bg-slate-850/50">
+                                <p className="text-[10px] font-bold text-gray-600 dark:text-slate-400 mb-2">Pilih dari gambar yang sudah ada:</p>
                                 <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto p-1">
                                     {existingImages.map((url, idx) => (
                                         <div 
@@ -156,7 +159,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                                                 setProduct(prev => ({ ...prev, image_url: url }));
                                                 setShowImagePicker(false);
                                             }}
-                                            className={`aspect-square rounded-md overflow-hidden border-2 cursor-pointer hover:border-blue-500 transition-colors ${product.image_url === url ? 'border-blue-600 ring-2 ring-blue-200' : 'border-transparent'}`}
+                                            className={`aspect-square rounded-md overflow-hidden border-2 cursor-pointer hover:border-blue-500 transition-colors ${product.image_url === url ? 'border-blue-600 ring-2 ring-blue-200 dark:ring-blue-900/40' : 'border-transparent'}`}
                                         >
                                             <img src={url} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
                                         </div>
@@ -165,76 +168,76 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({ isOpen, onClose, on
                             </div>
                         )}
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700">Nama Produk</label>
-                        <input type="text" name="name" value={product.name} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required />
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Nama Produk</label>
+                        <input type="text" name="name" value={product.name} onChange={handleChange} className="w-full px-3 py-2 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl text-xs text-slate-800 dark:text-slate-150 font-semibold focus:outline-none focus:border-slate-400 dark:focus:border-slate-600" placeholder="Contoh: Keripik Singkong Balado" required />
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Ukuran</label>
-                            <select name="size" value={product.size} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Ukuran Satuan</label>
+                            <select name="size" value={product.size} onChange={handleChange} className="w-full px-3 py-2 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl text-xs text-slate-700 dark:text-slate-350 font-bold focus:outline-none focus:border-slate-400 dark:focus:border-slate-600">
                                 {sizes.map(size => (
                                     <option key={size.id} value={size.name}>{size.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Barcode (Opsional)</label>
-                            <input type="text" name="barcode" value={product.barcode || ''} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Barcode (Opsional)</label>
+                            <input type="text" name="barcode" value={product.barcode || ''} onChange={handleChange} className="w-full px-3 py-2 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl text-xs font-mono text-slate-700 dark:text-slate-300 focus:outline-none focus:border-slate-400 dark:focus:border-slate-600" placeholder="Kode barcode" />
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Harga Modal (Rp)</label>
-                            <input type="number" name="cost_price" value={product.cost_price} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required min="0" />
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Harga Modal (Rp)</label>
+                            <input type="number" name="cost_price" value={product.cost_price} onChange={handleChange} className="w-full px-3 py-2 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl text-xs font-mono text-slate-800 dark:text-slate-200 font-bold focus:outline-none focus:border-slate-400 dark:focus:border-slate-600" required min="0" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Harga Jual (Rp)</label>
-                            <input type="number" name="price" value={product.price} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required min="0" />
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Harga Jual (Rp)</label>
+                            <input type="number" name="price" value={product.price} onChange={handleChange} className="w-full px-3 py-2 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-750 rounded-xl text-xs font-mono text-slate-800 dark:text-slate-100 font-extrabold focus:outline-none focus:border-slate-400 dark:focus:border-slate-600" required min="0" />
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Stok Saat Ini</label>
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Stok Tersedia</label>
                             <input 
                                 type="number" 
                                 name="stock" 
                                 value={product.stock} 
                                 onChange={handleChange} 
-                                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${!product.use_stock ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-white border-gray-300'}`} 
+                                className={`w-full px-3 py-2 border rounded-xl text-xs font-mono font-bold focus:outline-none focus:border-slate-450 dark:focus:border-slate-600 ${!product.use_stock ? 'bg-slate-100/50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border-slate-150/40 dark:border-slate-800' : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 text-slate-800 dark:text-slate-200'}`} 
                                 required={product.use_stock} 
                                 min="0" 
                                 disabled={!product.use_stock}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Batas Stok Menipis</label>
+                            <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Peringatan Batas Stok</label>
                             <input 
                                 type="number" 
                                 name="low_stock_threshold" 
                                 value={product.low_stock_threshold} 
                                 onChange={handleChange} 
-                                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${!product.use_stock ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-white border-gray-300'}`} 
+                                className={`w-full px-3 py-2 border rounded-xl text-xs font-mono font-bold focus:outline-none focus:border-slate-405 dark:focus:border-slate-600 ${!product.use_stock ? 'bg-slate-100/50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-500 border-slate-150/40 dark:border-slate-800' : 'bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-755 text-slate-800 dark:text-slate-200'}`} 
                                 required={product.use_stock} 
                                 min="0" 
                                 disabled={!product.use_stock}
                             />
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        <label className="flex items-center">
-                            <input type="checkbox" name="is_active" checked={'is_active' in product ? product.is_active : true} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                            <span className="ml-2 text-sm text-gray-700">Produk Aktif</span>
+                    <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-850/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/85">
+                        <label className="flex items-center cursor-pointer select-none">
+                            <input type="checkbox" name="is_active" checked={'is_active' in product ? product.is_active : true} onChange={handleChange} className="h-4 w-4 rounded-md border-slate-350 dark:border-slate-700 text-slate-900 focus:ring-slate-950" />
+                            <span className="ml-2 text-[11px] font-bold text-slate-605 dark:text-slate-350">Produk Aktif</span>
                         </label>
-                        <label className="flex items-center">
-                            <input type="checkbox" name="use_stock" checked={product.use_stock} onChange={handleChange} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                            <span className="ml-2 text-sm text-gray-700">Gunakan Stok</span>
+                        <label className="flex items-center cursor-pointer select-none">
+                            <input type="checkbox" name="use_stock" checked={product.use_stock} onChange={handleChange} className="h-4 w-4 rounded-md border-slate-350 dark:border-slate-700 text-slate-900 focus:ring-slate-955" />
+                            <span className="ml-2 text-[11px] font-bold text-slate-605 dark:text-slate-350">Gunakan Stok</span>
                         </label>
                     </div>
-                    <div className="flex justify-end space-x-3">
-                        <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Batal</button>
-                        <button type="submit" disabled={isSaving} className="px-4 py-2 bg-[#2F4B8B] text-white rounded-md hover:bg-blue-800 disabled:bg-gray-400">
-                            {isSaving ? 'Menyimpan...' : 'Simpan'}
+                    <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                        <button type="button" onClick={onClose} className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-750 cursor-pointer">Batal</button>
+                        <button type="submit" disabled={isSaving} className="px-5 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 rounded-xl font-bold text-xs hover:bg-slate-800 dark:hover:bg-slate-200 disabled:bg-slate-200 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 shadow-sm cursor-pointer">
+                            {isSaving ? 'Menyimpan...' : 'Simpan Detail'}
                         </button>
                     </div>
                 </form>
@@ -315,95 +318,110 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({ products,
   };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
-        <h1 className="text-3xl font-bold text-blue-900">Daftar Produk</h1>
-        <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
-            <div className="relative w-full sm:w-64">
+    <div className="p-0.5 space-y-4 font-sans animate-fade-in text-slate-800 dark:text-slate-100">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b border-slate-150/40 dark:border-slate-800 space-y-4 md:space-y-0">
+        <div>
+          <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 tracking-wider uppercase">Inventaris & Stok Kelola</h2>
+          <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight mt-0.5">Daftar Produk Toko</h1>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Kelola nama produk, stock limits, harga beli/jual secara efisien</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center space-y-2.5 sm:space-y-0 sm:space-x-3 w-full md:w-auto">
+            <div className="relative w-full sm:w-56 shrink-0">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <SearchIcon className="h-5 w-5 text-gray-400" />
+                    <SearchIcon className="h-3.5 w-3.5 text-slate-400" />
                 </div>
                 <input
                     type="text"
                     placeholder="Cari produk..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="block w-full pl-9 pr-3 py-1.5 border border-slate-205 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-400 dark:focus:border-slate-600 font-semibold"
                 />
             </div>
             {isAdmin && (
-                <button onClick={() => handleOpenModal()} className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-[#2F4B8B] text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-800 transition-colors">
-                    <PlusIcon className="w-5 h-5" />
+                <button 
+                  onClick={() => handleOpenModal()} 
+                  className="w-full sm:w-auto flex items-center justify-center space-x-1.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 px-3.5 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-200 transition-all text-xs font-bold shadow-sm cursor-pointer shrink-0"
+                >
+                    <PlusIcon className="w-3.5 h-3.5" />
                     <span>Tambah Produk</span>
                 </button>
             )}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="w-full text-sm text-left text-gray-500">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-100">
-            <tr>
-              <th scope="col" className="px-6 py-3">Gambar</th>
-              <th scope="col" className="px-6 py-3">Nama Produk</th>
-              <th scope="col" className="px-6 py-3">Barcode</th>
-              <th scope="col" className="px-6 py-3">Ukuran</th>
-              <th scope="col" className="px-6 py-3 text-right">Stok</th>
-              <th scope="col" className="px-6 py-3 text-right">Harga Jual</th>
-              <th scope="col" className="px-6 py-3">Status</th>
-              {isAdmin && <th scope="col" className="px-6 py-3 text-right">Aksi</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedProducts.map(product => (
-              <tr key={product.id} className="bg-white border-b hover:bg-gray-50">
-                <td className="px-6 py-4">
-                    {product.image_url ? (
-                        <img src={product.image_url} alt={product.name} className="w-12 h-12 object-cover rounded-md shadow" />
-                    ) : (
-                        <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center"><PackageIcon className="w-6 h-6 text-gray-400"/></div>
-                    )}
-                </td>
-                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  {product.name}
-                </th>
-                <td className="px-6 py-4 font-mono text-xs">{product.barcode || '-'}</td>
-                <td className="px-6 py-4">{product.size}</td>
-                <td className="px-6 py-4 text-right">
-                    {product.use_stock ? (
-                        <>
-                            <span className={`font-bold ${product.stock <= product.low_stock_threshold ? 'text-red-600' : 'text-gray-900'}`}>
-                                {product.stock}
-                            </span>
-                            {product.stock <= product.low_stock_threshold && (
-                                <div className="text-[10px] text-red-500 font-bold uppercase">Menipis!</div>
-                            )}
-                        </>
-                    ) : (
-                        <span className="text-gray-400 italic text-xs">Abaikan Stok</span>
-                    )}
-                </td>
-                <td className="px-6 py-4 text-right">Rp {product.price.toLocaleString('id-ID')}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {product.is_active ? 'Aktif' : 'Nonaktif'}
-                  </span>
-                </td>
-                {isAdmin && (
-                    <td className="px-6 py-4 text-right">
-                        <button onClick={() => handleOpenModal(product)} className="text-blue-600 hover:text-blue-800 mr-4"><EditIcon className="w-5 h-5" /></button>
-                        <button onClick={() => handleDeleteProduct(product.id)} className="text-red-600 hover:text-red-800"><TrashIcon className="w-5 h-5" /></button>
-                    </td>
-                )}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-150/50 dark:border-slate-800/80 overflow-hidden shadow-[0_2px_12px_rgba(15,23,42,0.015)]">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left font-sans">
+            <thead className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider bg-slate-50/50 dark:bg-slate-900/50">
+              <tr>
+                <th className="px-5 py-3">Gambar</th>
+                <th className="px-5 py-3">Nama Produk</th>
+                <th className="px-5 py-3">Barcode</th>
+                <th className="px-5 py-3">Ukuran</th>
+                <th className="px-5 py-3 text-right">Stok</th>
+                <th className="px-5 py-3 text-right">Harga Jual</th>
+                <th className="px-5 py-3">Status</th>
+                {isAdmin && <th className="px-5 py-3 text-right">Aksi</th>}
               </tr>
-            ))}
-            {paginatedProducts.length === 0 && (
-                <tr>
-                    <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-gray-500">Belum ada produk.</td>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs text-slate-700 dark:text-slate-350">
+              {paginatedProducts.map(product => (
+                <tr key={product.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                  <td className="px-5 py-2.5">
+                      {product.image_url ? (
+                          <img src={product.image_url} alt={product.name} className="w-9 h-9 object-cover rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm" referrerPolicy="no-referrer" />
+                      ) : (
+                          <div className="w-9 h-9 bg-slate-50 dark:bg-slate-800 border border-slate-100/60 dark:border-slate-750 rounded-lg flex items-center justify-center"><PackageIcon className="w-4 h-4 text-slate-350 dark:text-slate-500"/></div>
+                      )}
+                  </td>
+                  <td className="px-5 py-2.5 font-bold text-slate-800 dark:text-slate-150 whitespace-nowrap">
+                    {product.name}
+                  </td>
+                  <td className="px-5 py-2.5 font-mono text-slate-400 dark:text-slate-500">{product.barcode || '-'}</td>
+                  <td className="px-5 py-2.5">
+                    <span className="inline-block bg-slate-100 dark:bg-slate-800 border border-slate-150/40 dark:border-slate-700 text-slate-650 dark:text-slate-300 font-bold text-[10px] px-1.5 py-0.5 rounded">
+                      {product.size}
+                    </span>
+                  </td>
+                  <td className="px-5 py-2.5 text-right">
+                      {product.use_stock ? (
+                          <div className="flex flex-col items-end">
+                              <span className={`font-bold font-mono ${product.stock <= product.low_stock_threshold ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                                  {product.stock}
+                              </span>
+                              {product.stock <= product.low_stock_threshold && (
+                                  <span className="text-[8px] text-red-500 font-extrabold uppercase tracking-wider leading-none mt-0.5 animate-pulse">Menipis!</span>
+                              )}
+                          </div>
+                      ) : (
+                          <span className="text-slate-350 dark:text-slate-600 font-medium italic text-[10px]">Abaikan Stok</span>
+                      )}
+                  </td>
+                  <td className="px-5 py-2.5 text-right font-black text-slate-800 dark:text-slate-100 font-mono">Rp{product.price.toLocaleString('id-ID')}</td>
+                  <td className="px-5 py-2.5">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${product.is_active ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100/60 dark:border-emerald-900/30' : 'bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-450 border border-rose-100/60 dark:border-rose-900/30'}`}>
+                      {product.is_active ? 'Aktif' : 'Nonaktif'}
+                    </span>
+                  </td>
+                  {isAdmin && (
+                      <td className="px-5 py-2.5 text-right">
+                        <div className="flex justify-end gap-1">
+                          <button onClick={() => handleOpenModal(product)} className="p-1 px-[5px] text-slate-500 hover:text-slate-805 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800 border border-transparent rounded-lg transition-colors cursor-pointer" title="Edit"><EditIcon className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteProduct(product.id)} className="p-1 px-[5px] text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/35 border border-transparent rounded-lg transition-colors cursor-pointer" title="Hapus"><TrashIcon className="w-4 h-4" /></button>
+                        </div>
+                      </td>
+                  )}
                 </tr>
-             )}
-          </tbody>
-        </table>
+              ))}
+              {paginatedProducts.length === 0 && (
+                  <tr>
+                      <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-slate-400 dark:text-slate-600 font-semibold">Produk tidak ditemukan.</td>
+                  </tr>
+               )}
+            </tbody>
+          </table>
+        </div>
         
         <Pagination 
             currentPage={currentPage}
